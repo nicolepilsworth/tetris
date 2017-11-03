@@ -1,0 +1,9 @@
+- Create (5rows, 3columns) initial Tetris board (a 2-d array filled with 'False' values)
+
+- Create two 3-block tetrominos (using a 2-d array with 'True' values for filled blocks)
+
+- Function to rotate tetrominos to get possible rotations (filter duplicates)
+
+- Write function to find possible positions to place tetrominos (with all translations and rotations)
+
+- Choose a random action on a random tetromino, update board
