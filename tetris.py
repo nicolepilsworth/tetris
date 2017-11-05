@@ -1,21 +1,33 @@
 import pprint
 import numpy
+from random import randint
 from tetrominos import Tetromino
 from board import Board
+
 
 def play():
   board = Board(5, 3)
   board.printBoard()
 
   while(not board.gameOver):
-    tetromino = Tetromino(1)
+    # TODO: change to random Tetromino
+    tetromino = Tetromino(randint(0, 1))
 
-    # Print all rotations
-    # for rot in tetromino.rotations:
-    #   tetromino.printShape(rot)
+    tetromino.printShape(tetromino.shape)
 
-    moves = tetromino.getPossibleMoves(board)
-    board.gameOver = True
+    # Moves come in the format "columnIndex_rotationIndex"
+    possibleMoves = tetromino.getPossibleMoves(board)
+
+    # Game over condition
+    if len(possibleMoves) == 0:
+        break
+
+    # TODO: change to select optimal action under Q-learning policy
+    action = possibleMoves[randint(0, len(possibleMoves) - 1)]
+
+    r = board.makeMove(tetromino, action)
+    board.printBoard()
+  print "Cleared lines: ", board.linesCleared
 
 def main():
   play()

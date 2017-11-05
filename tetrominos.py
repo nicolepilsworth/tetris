@@ -3,8 +3,8 @@ import numpy
 class Tetromino:
   def __init__(self, idx):
     allTetrominos = [
-      [[True, False],
-       [True, True]],
+      [[True, True],
+       [True, False]],
 
        [[True, True, True]]
     ]
@@ -23,7 +23,13 @@ class Tetromino:
       return
 
   def getPossibleMoves(self, board):
-      return []
+    moves = []
+    for idx, rot in enumerate(self.rotations):
+      for col in range(len(board.board[0]) - len(rot[0]) + 1):
+       if board.tetrominoFitsInCol(col, rot):
+         moves.append(str(col) + "_" + str(idx))
+
+    return moves
 
   def getRotations(self):
     rotations = [numpy.array(self.shape)]
