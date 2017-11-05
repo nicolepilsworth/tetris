@@ -22,6 +22,7 @@ class Tetromino:
       print pieceStr
       return
 
+  # Iterate through every rotation and column to get all possible actions
   def getPossibleMoves(self, board):
     moves = []
     for idx, rot in enumerate(self.rotations):

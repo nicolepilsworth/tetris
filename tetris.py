@@ -10,9 +10,8 @@ def play():
   board.printBoard()
 
   while(not board.gameOver):
-    # TODO: change to random Tetromino
+    # Random Tetromino for next state
     tetromino = Tetromino(randint(0, 1))
-
     tetromino.printShape(tetromino.shape)
 
     # Moves come in the format "columnIndex_rotationIndex"
@@ -20,14 +19,16 @@ def play():
 
     # Game over condition
     if len(possibleMoves) == 0:
+        print "GAME OVER"
         break
 
     # TODO: change to select optimal action under Q-learning policy
     action = possibleMoves[randint(0, len(possibleMoves) - 1)]
 
-    r = board.makeMove(tetromino, action)
+    r = board.act(tetromino, action)
     board.printBoard()
-  print "Cleared lines: ", board.linesCleared
+
+  print "Lines cleared: ", board.linesCleared
 
 def main():
   play()

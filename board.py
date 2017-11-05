@@ -2,9 +2,8 @@ import numpy
 
 # Get column height of either board column or piece column
 def getColHeight(shape, col):
-  # Approach from 'top' of shape
+  # Approach from 'top' of shape to find first instance of block in column
   for idx, row in reversed(list(enumerate(shape))):
-    # print type, col, row
     if row[col]:
       return idx + 1
   return 0
@@ -25,7 +24,7 @@ class Board:
   # Print the board in Tetris format
   def printBoard(self):
     boardStr = ""
-    # Bottom elements of board appear first, so board must be reversed
+    # Bottom elements of board appear first in array, so array must be reversed
     for row in reversed(self.board):
       rowStr = "|   "
       for item in row:
@@ -47,6 +46,7 @@ class Board:
         return False
     return True
 
+  # Checks whether Tetromino can be placed in particular position in column
   def canPlaceTetromino(self, row, col, tetromino):
     for i in reversed(range(len(tetromino))):
       for j in range(len(tetromino[i])):
@@ -54,7 +54,8 @@ class Board:
           return False
     return True
 
-  def getMinPlacementHeight(self, tetromino, action):
+  # Get height to which tetromino will fall
+  def getFallHeight(self, tetromino, action):
     col = int(action.split("_")[0])
 
     minHeight = self.nrows
@@ -67,17 +68,19 @@ class Board:
         return minHeight
     return minHeight
 
-  def makeMove(self, tetromino, action):
+  def act(self, tetromino, action):
     [col, rot] = map(int, (action.split("_")))
     tetShape = tetromino.rotations[rot]
-    minHeight = self.getMinPlacementHeight(tetShape, action)
+    minHeight = self.getFallHeight(tetShape, action)
 
+    # Update board configuration (add new piece)
     for i in reversed(range(len(tetShape))):
       for j in range(len(tetShape[0])):
         self.board[minHeight-i][col+j] = (self.board[minHeight-i][col+j] or tetShape[i][j])
 
     return self.findClearedLines()
 
+  # Clear and count full lines
   def findClearedLines(self):
     nClearedLines = 0
     for idx, row in reversed(list(enumerate(self.board))):
