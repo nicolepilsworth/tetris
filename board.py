@@ -12,14 +12,15 @@ class Board:
   def __init__(self, rows, cols):
     self.nrows = rows
     self.ncols = cols
-
-    self.board = []
-    for i in range(rows):
-      self.board.append([False] * cols)
-
+    self.reset()
     self.linesCleared = 0
 
     self.gameOver = False
+
+  def reset(self):
+    self.board = []
+    for i in range(self.nrows):
+      self.board.append([False] * self.ncols)
 
   # Print the board in Tetris format
   def printBoard(self):
@@ -32,7 +33,7 @@ class Board:
         rowStr += str(int(item)) + "   "
       rowStr += "|"
       boardStr += rowStr + "\n"
-    print boardStr
+    print(boardStr)
     return
 
   def getRowsInColRemaining(self, col):
