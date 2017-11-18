@@ -19,7 +19,7 @@ def play():
 
     # Game over condition
     if len(possibleMoves) == 0:
-        print "GAME OVER"
+        print("GAME OVER")
         break
 
     # TODO: change to select optimal action under Q-learning policy
@@ -28,7 +28,7 @@ def play():
     r = board.act(tetromino, action)
     board.printBoard()
 
-  print "Lines cleared: ", board.linesCleared
+  print("Lines cleared: ", board.linesCleared)
 
 def main():
   play()

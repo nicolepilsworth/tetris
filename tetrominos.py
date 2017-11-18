@@ -19,7 +19,7 @@ class Tetromino:
           # Convert "False" to "0" and "True" to "1"
           rowStr += str(int(item)) + "  "
         pieceStr += rowStr + "\n"
-      print pieceStr
+      print(pieceStr)
       return
 
   # Iterate through every rotation and column to get all possible actions
