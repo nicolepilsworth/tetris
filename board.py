@@ -13,12 +13,12 @@ class Board:
     self.nrows = rows
     self.ncols = cols
     self.reset()
-    self.linesCleared = 0
-
-    self.gameOver = False
 
   def reset(self):
     self.board = []
+    self.colHeights = [0] * self.ncols
+    self.linesCleared = 0
+
     for i in range(self.nrows):
       self.board.append([False] * self.ncols)
 
@@ -56,9 +56,7 @@ class Board:
     return True
 
   # Get height to which tetromino will fall
-  def getFallHeight(self, tetromino, action):
-    col = int(action.split("_")[0])
-
+  def getFallHeight(self, tetromino, col, rot):
     minHeight = self.nrows
     for row in reversed(range(len(self.board))):
       if row < len(tetromino) - 1:
@@ -69,10 +67,9 @@ class Board:
         return minHeight
     return minHeight
 
-  def act(self, tetromino, action):
-    [col, rot] = map(int, (action.split("_")))
+  def act(self, tetromino, col, rot):
     tetShape = tetromino.rotations[rot]
-    minHeight = self.getFallHeight(tetShape, action)
+    minHeight = self.getFallHeight(tetShape, col, rot)
 
     # Update board configuration (add new piece)
     for i in reversed(range(len(tetShape))):
