@@ -3,6 +3,7 @@ import numpy as np
 import random
 from tetrominos import Tetromino, createTetrominos
 from board import Board
+from graph import Graph
 
 # For this implementation, concatenate board config and
 # Tetromino config into a string for the state
@@ -20,7 +21,7 @@ def epsilonGreedy(q, epsilon, possMoves):
             qPossMoves.append(q[p[0]][p[1]])
         return possMoves[np.argmax(qPossMoves)]
 
-def play(epsilon, gamma, alpha, nGames, rand):
+def learn(epsilon, gamma, alpha, nGames, isRand, getAvgs):
   Q = {}
   tetrominos = createTetrominos()
   board = Board(5, 3)
@@ -28,6 +29,7 @@ def play(epsilon, gamma, alpha, nGames, rand):
   totalLinesCleared = 0
   col = 0
   rot = 0
+  avgs = []
 
   for i in range(nGames):
     board.reset()
@@ -44,14 +46,16 @@ def play(epsilon, gamma, alpha, nGames, rand):
         #   print("GAME OVER")
           break
 
-      if rand:
+      if isRand:
         [col, rot] = possibleMoves[random.randint(0, len(possibleMoves) - 1)]
       else:
         s = state(board.board, tetromino.shape)
         # Check if Q(s, :) exists, create if not
         if s not in Q:
           Q[s] = np.zeros((board.ncols, len(tetromino.rotations)))
-        [col, rot] = epsilonGreedy(Q[s], epsilon, possibleMoves)
+          [col, rot] = possibleMoves[random.randint(0, len(possibleMoves) - 1)]
+        else:
+          [col, rot] = epsilonGreedy(Q[s], epsilon, possibleMoves)
 
       # Perform action and collect reward
       r = board.act(tetromino, col, rot)
@@ -60,7 +64,7 @@ def play(epsilon, gamma, alpha, nGames, rand):
       # Random Tetromino for next state
       nextTetromino = tetrominos[random.randint(0, len(tetrominos) - 1)]
 
-      if not rand:
+      if not isRand:
           s1 = state(board.board, nextTetromino.shape)
 
           # Check if Q(s1, :) exists, create if not
@@ -74,18 +78,36 @@ def play(epsilon, gamma, alpha, nGames, rand):
 
     totalLinesCleared += board.linesCleared
 
+    if (i+1)%10 == 0:
+      avgs.append(totalLinesCleared/(i+1))
+
     # print("Lines cleared: ", board.linesCleared)
-  print("Average lines cleared:", totalLinesCleared/nGames)
-  print(Q)
+  avg = totalLinesCleared/nGames
+  avgs.append(avg)
+  # print("Average lines cleared:", avg)
+  if isAvgs:
+    return avgs
+  else:
+    return Q
+
+
+def randVsQ(epsilon, gamma, alpha):
+  tSteps = [10*i for i in range(1, 1001)]
+
+  randAvgs = learn(epsilon, gamma, alpha, 10000, True, True)
+  qAvgs = learn(epsilon, gamma, alpha, 10000, False, True)
+  graph = Graph(tSteps, randAvgs, qAvgs)
+  graph.plot()
 
 def main():
-  epsilon = 0.2 # For epsilon-greedy action choice
-  gamma = 0.9 # Discount factor
-  alpha = 0.01 # Value function learning rate
-  nGames = 1000
+  epsilon = 0.3 # For epsilon-greedy action choice
+  gamma = 0.7 # Discount factor
+  alpha = 0.2 # Value function learning rate
+  nGames = 10000
   rand = False # Whether to choose actions randomly of use Q-learning
 
-  play(epsilon, gamma, alpha, nGames, rand)
+  # randVsQ(epsilon, gamma, alpha)
+  Q = learn(epsilon, gamma, alpha, nGames, rand, False)
 
 if __name__ == "__main__":
   main()
