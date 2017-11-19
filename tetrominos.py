@@ -5,13 +5,15 @@ def createTetrominos():
       [[True, True],
        [True, False]],
 
-       [[True, True, True]]
+       [[True], [True], [True]]
     ]]
-    return [Tetromino(s, setRotations(s)) for s in shapes]
+    rotations = [setRotations(s) for s in shapes]
+    return [Tetromino(s, rotations[i], setRotationHeights(rotations[i])) for i, s in enumerate(shapes)]
 
 def setRotations(shape):
     rotations = [shape]
     currentRot = shape
+    rotHeight = 0
 
     # 4 is max no. of rotations (first one already stored)
     for i in range(3):
@@ -27,10 +29,28 @@ def setRotations(shape):
 
     return rotations
 
+# Return array containing column heights of every rotation
+def setRotationHeights(shapes):
+  rotHeights = [rotationHeights(s) for s in shapes]
+
+# Get column height of either board column or piece column
+def rotationHeights(shape):
+  heights = []
+  # Approach from 'top' of shape to find first instance of block in column
+  for col in range(len(range(len(shape[0])))):
+      height = 0
+      for idx, row in reversed(list(enumerate(shape))):
+        if row[col]:
+          height = idx + 1
+          break
+      heights.append(height)
+  return heights
+
 class Tetromino:
-  def __init__(self, shape, rotations):
+  def __init__(self, shape, rotations, rotHeights):
     self.shape = shape
     self.rotations = rotations
+    self.rotHeights = rotHeights
 
   def printShape(self):
       pieceStr = ""
