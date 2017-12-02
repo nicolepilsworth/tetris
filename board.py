@@ -1,12 +1,12 @@
-import numpy
+import numpy as np
+import pandas as pd
+import itertools
 
-# Get column height of either board column or piece column
-def getColHeight(shape, col):
-  # Approach from 'top' of shape to find first instance of block in column
-  for idx, row in reversed(list(enumerate(shape))):
-    if row[col]:
-      return idx + 1
-  return 0
+def reverse_enumerate(iterable):
+  """
+  Enumerate over an iterable in reverse order while retaining proper indexes
+  """
+  return itertools.izip(reversed(xrange(len(iterable))), reversed(iterable))
 
 class Board:
   def __init__(self, rows, cols):
@@ -15,77 +15,60 @@ class Board:
     self.reset()
 
   def reset(self):
-    self.board = []
-    self.colHeights = [0] * self.ncols
+    self.colHeights = np.zeros(self.ncols)
     self.linesCleared = 0
+    self.board = np.zeros((self.nrows, self.ncols), dtype=bool)
+    self.dfBoard = pd.DataFrame(self.board)
 
-    for i in range(self.nrows):
-      self.board.append([False] * self.ncols)
+  def calcColHeights(self):
+    self.colHeights = [0 if sum(self.dfBoard[col]) == 0 else self.dfBoard[col][::-1].idxmax() + 1 for col in self.dfBoard]
 
   # Print the board in Tetris format
   def printBoard(self):
-    boardStr = ""
-    # Bottom elements of board appear first in array, so array must be reversed
-    for row in reversed(self.board):
-      rowStr = "|   "
-      for item in row:
-        # Convert "False" to "0" and "True" to "1"
-        rowStr += str(int(item)) + "   "
-      rowStr += "|"
-      boardStr += rowStr + "\n"
-    print(boardStr)
+    print(self.dfBoard[::-1].astype(int).to_string(header=False,index=False))
+    print("\n")
     return
 
-  def getRowsInColRemaining(self, col):
-      return self.nrows - getColHeight(self.board, col)
-
   # Return True if tetromino shape fits in column
-  def tetrominoFitsInCol(self, col, tetromino):
-    for i in range(len(tetromino[0])):
-      # Compare number of rows remaining in board column with height of tetromino piece
-      if self.getRowsInColRemaining(col+i) < getColHeight(tetromino, i):
-        return False
-    return True
+  def tetrominoFitsInCol(self, col, tetromino, rHeights):
+    nCols = tetromino.shape[1]
+    # Compare number of rows remaining in board column with height of tetromino piece
+    return not np.any(np.greater(rHeights, np.subtract(np.full((1, nCols), self.nrows), (self.colHeights[col:col+nCols]))))
 
-  # Checks whether Tetromino can be placed in particular position in column
-  def canPlaceTetromino(self, row, col, tetromino):
-    for i in reversed(range(len(tetromino))):
-      for j in range(len(tetromino[i])):
-        if not ((tetromino[i][j] and not self.board[row-i][col+j]) or (not tetromino[i][j])):
-          return False
-    return True
+  def getAnchorColumn(self, tetromino, rHeights, col):
+    anchorCol = np.argmax([sum(x) for x in zip(rHeights, self.colHeights[col:col+tetromino.shape[1]])])
+    return anchorCol, self.colHeights[col + anchorCol]
 
-  # Get height to which tetromino will fall
-  def getFallHeight(self, tetromino, col, rot):
-    minHeight = self.nrows
-    for row in reversed(range(len(self.board))):
-      if row < len(tetromino) - 1:
-        return minHeight
-      if self.canPlaceTetromino(row, col, tetromino):
-        minHeight = row
-      else:
-        return minHeight
-    return minHeight
+  def addAtPos(self, tShape, xycoor):
+    size_x, size_y = tShape.shape
+    coor_x, coor_y = xycoor
+    end_x, end_y   = (coor_x + size_x), (coor_y + size_y)
+
+    self.board[coor_x:end_x, coor_y:end_y] = self.board[coor_x:end_x, coor_y:end_y] + tShape
+    return
 
   def act(self, tetromino, col, rot):
-    tetShape = tetromino.rotations[rot]
-    minHeight = self.getFallHeight(tetShape, col, rot)
+    tShape = tetromino.rotations[rot]
+    heights = tetromino.rHeights[rot]
+    shapeHeight = tShape.shape[0]
+    shapeWidth = tShape.shape[1]
+    anchorCol, anchorHeight = self.getAnchorColumn(tShape, tetromino.rHeights[rot], col)
 
     # Update board configuration (add new piece)
-    for i in reversed(range(len(tetShape))):
-      for j in range(len(tetShape[0])):
-        self.board[minHeight-i][col+j] = (self.board[minHeight-i][col+j] or tetShape[i][j])
-
+    self.addAtPos(tShape, (int(anchorHeight - (np.max(heights) - heights[anchorCol])), col))
     return self.findClearedLines()
 
   # Clear and count full lines
   def findClearedLines(self):
     nClearedLines = 0
     for idx, row in reversed(list(enumerate(self.board))):
-      if numpy.all(row):
-        del self.board[idx]
-        self.board.append([False] * self.ncols)
+      if np.all(row):
+        self.board = np.delete(self.board, idx, 0)
+        # self.board.append(np.zeros[False] * self.ncols)
         nClearedLines += 1
 
+    self.board = np.pad(self.board, ((0, nClearedLines), (0, 0)), 'constant')
+    self.dfBoard = pd.DataFrame(self.board)
+    self.calcColHeights()
     self.linesCleared += nClearedLines
     return nClearedLines
