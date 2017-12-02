@@ -1,3 +1,4 @@
+import pandas as pd
 import numpy as np
 
 def createTetrominos():
@@ -8,67 +9,61 @@ def createTetrominos():
        [[True], [True], [True]]
     ]]
     rotations = [setRotations(s) for s in shapes]
-    return [Tetromino(s, rotations[i], setRotationHeights(rotations[i])) for i, s in enumerate(shapes)]
+    return [Tetromino(s, rotations[i], *setHeights(rotations[i])) for i, s in enumerate(shapes)]
 
 def setRotations(shape):
-    rotations = [shape]
-    currentRot = shape
-    rotHeight = 0
+  rotations = [shape]
+  currentRot = shape
+  rotHeight = 0
 
-    # 4 is max no. of rotations (first one already stored)
-    for i in range(3):
-      newRot = np.rot90(currentRot)
+  # 4 is max no. of rotations (first one already stored)
+  for i in range(3):
+    newRot = np.rot90(currentRot)
 
-      # Check if rotation is already in array - if it is, no more unique rotations
-      for rot in rotations:
-        if np.all(newRot == rot) and len(newRot) == len(rot):
-          return rotations
+    # Check if rotation is already in array - if it is, no more unique rotations
+    if next((True for rot in rotations if np.array_equal(newRot, rot)), False):
+      return rotations
 
-      rotations.append(newRot)
-      currentRot = newRot
+    rotations.append(newRot)
+    currentRot = newRot
 
-    return rotations
+  return rotations
 
 # Return array containing column heights of every rotation
-def setRotationHeights(shapes):
-  rotHeights = [rotationHeights(s) for s in shapes]
+def setHeights(shapes):
+  return [height(s, "rHeight") for s in shapes], [height(s, "highest") for s in shapes]
 
 # Get column height of either board column or piece column
-def rotationHeights(shape):
+def height(tShape, hType):
   heights = []
-  # Approach from 'top' of shape to find first instance of block in column
-  for col in range(len(range(len(shape[0])))):
-      height = 0
-      for idx, row in reversed(list(enumerate(shape))):
-        if row[col]:
-          height = idx + 1
-          break
-      heights.append(height)
+  nRows, nCols = tShape.shape
+
+  # Use idxmax on reversed shape to find last instance of True value in column
+  heights = {
+    "rHeight": np.subtract(np.full((1, nCols), nRows), np.argmax(tShape, axis=0)).flatten(),
+    "highest": np.subtract(np.full((1, nCols), nRows), np.argmax(np.flip(tShape, 0), axis=0)).flatten()
+  }[hType]
+
   return heights
 
 class Tetromino:
-  def __init__(self, shape, rotations, rotHeights):
+  def __init__(self, shape, rotations, rHeights, highest):
     self.shape = shape
     self.rotations = rotations
-    self.rotHeights = rotHeights
+    self.rHeights = rHeights
+    self.highest = highest
 
-  def printShape(self):
-      pieceStr = ""
-      for row in self.shape:
-        rowStr = ""
-        for item in row:
-          # Convert "False" to "0" and "True" to "1"
-          rowStr += str(int(item)) + "  "
-        pieceStr += rowStr + "\n"
-      print(pieceStr)
-      return
+  def printShape(self, rot):
+    print(''.join(map(lambda x: ' '.join(map(str, x)) + "\n", self.rotations[rot][::-1].astype(int))))
+    print("\n")
+    return
 
   # Iterate through every rotation and column to get all possible actions
   def getPossibleMoves(self, board):
     moves = []
     for idx, rot in enumerate(self.rotations):
-      for col in range(len(board.board[0]) - len(rot[0]) + 1):
-       if board.tetrominoFitsInCol(col, rot):
-         moves.append([col, idx])
+      for col in range(board.board.shape[1] - rot.shape[1] + 1):
+        if board.tetrominoFitsInCol(col, rot, self.rHeights[idx]):
+          moves.append([col, idx])
 
     return moves
