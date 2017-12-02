@@ -12,9 +12,13 @@ def state(board, tetromino):
     tString = ''.join(''.join('%d' %x for x in row) for row in tetromino)
     return bString + tString
 
+# Given a list, return a random element from the list
+def randChoice(l):
+    return l[random.randint(0, len(l) - 1)]
+
 def epsilonGreedy(q, epsilon, possMoves):
     if random.random() < epsilon:
-        return possMoves[random.randint(0, len(possMoves) - 1)]
+        return randChoice(possMoves)
     else:
         qPossMoves = []
         for p in possMoves:
@@ -30,39 +34,35 @@ def learn(epsilon, gamma, alpha, nGames, isRand, getAvgs):
   col = 0
   rot = 0
   avgs = []
-
   for i in range(nGames):
     board.reset()
-    tetromino = tetrominos[random.randint(0, 1)]
+    tetromino = randChoice(tetrominos)
 
     while(True):
-    #   tetromino.printShape()
-
       # Moves come in the format [columnIndex, rotationIndex]
       possibleMoves = tetromino.getPossibleMoves(board)
 
       # Game over condition
       if len(possibleMoves) == 0:
-        #   print("GAME OVER")
           break
 
       if isRand:
-        [col, rot] = possibleMoves[random.randint(0, len(possibleMoves) - 1)]
+        [col, rot] = randChoice(possibleMoves)
       else:
         s = state(board.board, tetromino.shape)
+
         # Check if Q(s, :) exists, create if not
         if s not in Q:
           Q[s] = np.zeros((board.ncols, len(tetromino.rotations)))
-          [col, rot] = possibleMoves[random.randint(0, len(possibleMoves) - 1)]
+          [col, rot] = randChoice(possibleMoves)
         else:
           [col, rot] = epsilonGreedy(Q[s], epsilon, possibleMoves)
 
       # Perform action and collect reward
       r = board.act(tetromino, col, rot)
-      # board.printBoard()
 
       # Random Tetromino for next state
-      nextTetromino = tetrominos[random.randint(0, len(tetrominos) - 1)]
+      nextTetromino = randChoice(tetrominos)
 
       if not isRand:
           s1 = state(board.board, nextTetromino.shape)
@@ -71,7 +71,7 @@ def learn(epsilon, gamma, alpha, nGames, isRand, getAvgs):
           if s1 not in Q:
             Q[s1] = np.zeros((board.ncols, len(nextTetromino.rotations)))
 
-          # TODO: change to select optimal action under Q-learning policy
+          # Q-learning value function update
           Q[s][col][rot] = Q[s][col][rot] + alpha*(r + gamma*np.amax(Q[s1]) - Q[s][col][rot])
 
       tetromino = nextTetromino
@@ -85,11 +85,43 @@ def learn(epsilon, gamma, alpha, nGames, isRand, getAvgs):
   avg = totalLinesCleared/nGames
   avgs.append(avg)
   # print("Average lines cleared:", avg)
-  if isAvgs:
+  if getAvgs:
     return avgs
   else:
     return Q
 
+def playByPolicy(Q):
+  tetrominos = createTetrominos()
+  board = Board(5, 3)
+  board.printBoard()
+  totalLinesCleared = 0
+  col = 0
+  rot = 0
+
+  while(True):
+    tetromino = randChoice(tetrominos)
+    # Moves come in the format [columnIndex, rotationIndex]
+    possibleMoves = tetromino.getPossibleMoves(board)
+
+    # Game over condition
+    if len(possibleMoves) == 0:
+        print("GAME OVER")
+        break
+
+    s = state(board.board, tetromino.shape)
+    # Check if Q(s, :) exists, use policy if it does
+    if s in Q:
+      [col, rot] = epsilonGreedy(Q[s], -1, possibleMoves)
+    else:
+      [col, rot] = randChoice(possibleMoves)
+
+    tetromino.printShape(rot)
+
+    # Perform action and collect reward
+    r = board.act(tetromino, col, rot)
+    board.printBoard()
+
+  print("Lines cleared: ", board.linesCleared)
 
 def randVsQ(epsilon, gamma, alpha):
   tSteps = [10*i for i in range(1, 1001)]
@@ -102,12 +134,13 @@ def randVsQ(epsilon, gamma, alpha):
 def main():
   epsilon = 0.3 # For epsilon-greedy action choice
   gamma = 0.7 # Discount factor
-  alpha = 0.2 # Value function learning rate
+  alpha = 0.07 # Value function learning rate
   nGames = 10000
   rand = False # Whether to choose actions randomly of use Q-learning
 
-  # randVsQ(epsilon, gamma, alpha)
-  Q = learn(epsilon, gamma, alpha, nGames, rand, False)
+  randVsQ(epsilon, gamma, alpha)
+  # Q = learn(epsilon, gamma, alpha, nGames, rand, False)
+  # playByPolicy({})
 
 if __name__ == "__main__":
   main()
