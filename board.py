@@ -1,12 +1,5 @@
 import numpy as np
 import pandas as pd
-import itertools
-
-def reverse_enumerate(iterable):
-  """
-  Enumerate over an iterable in reverse order while retaining proper indexes
-  """
-  return itertools.izip(reversed(xrange(len(iterable))), reversed(iterable))
 
 class Board:
   def __init__(self, rows, cols):
@@ -32,6 +25,7 @@ class Board:
   # Return True if tetromino shape fits in column
   def tetrominoFitsInCol(self, col, tetromino, rHeights):
     nCols = tetromino.shape[1]
+    # TODO: Store np.fulls in Tetromino class
     # Compare number of rows remaining in board column with height of tetromino piece
     return not np.any(np.greater(rHeights, np.subtract(np.full((1, nCols), self.nrows), (self.colHeights[col:col+nCols]))))
 
@@ -50,8 +44,6 @@ class Board:
   def act(self, tetromino, col, rot):
     tShape = tetromino.rotations[rot]
     heights = tetromino.rHeights[rot]
-    shapeHeight = tShape.shape[0]
-    shapeWidth = tShape.shape[1]
     anchorCol, anchorHeight = self.getAnchorColumn(tShape, tetromino.rHeights[rot], col)
 
     # Update board configuration (add new piece)
@@ -61,13 +53,15 @@ class Board:
   # Clear and count full lines
   def findClearedLines(self):
     nClearedLines = 0
-    for idx, row in reversed(list(enumerate(self.board))):
-      if np.all(row):
-        self.board = np.delete(self.board, idx, 0)
-        # self.board.append(np.zeros[False] * self.ncols)
+    newBoard = np.empty((0, self.ncols))
+
+    for row in self.board:
+      if not np.all(row):
+        newBoard = np.append(newBoard, [row], axis=0)
+      else:
         nClearedLines += 1
 
-    self.board = np.pad(self.board, ((0, nClearedLines), (0, 0)), 'constant')
+    self.board = np.pad(newBoard, ((0, nClearedLines), (0, 0)), 'constant')
     self.dfBoard = pd.DataFrame(self.board)
     self.calcColHeights()
     self.linesCleared += nClearedLines
