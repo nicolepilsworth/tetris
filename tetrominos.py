@@ -8,8 +8,10 @@ def createTetrominos():
 
        [[True], [True], [True]]
     ]]
+    # TODO: Add 'np.fulls'
     rotations = [setRotations(s) for s in shapes]
-    return [Tetromino(s, rotations[i], *setHeights(rotations[i])) for i, s in enumerate(shapes)]
+    pad = (np.max([np.max([r.shape[0] for r in x]) for x in rotations]), np.max([np.max([r.shape[1] for r in x]) for x in rotations]))
+    return [Tetromino(s, rotations[i], padRotations(rotations[i], pad), *setHeights(rotations[i])) for i, s in enumerate(shapes)]
 
 def setRotations(shape):
   rotations = [shape]
@@ -29,6 +31,10 @@ def setRotations(shape):
 
   return rotations
 
+def padRotations(shapes, pad):
+  padRows, padCols = pad
+  return [np.pad(x, ((0, padRows - x.shape[0]), (0, padCols - x.shape[1])), "constant", constant_values=(False,)) for x in shapes]
+
 # Return array containing column heights of every rotation
 def setHeights(shapes):
   return [height(s, "rHeight") for s in shapes], [height(s, "highest") for s in shapes]
@@ -47,23 +53,27 @@ def height(tShape, hType):
   return heights
 
 class Tetromino:
-  def __init__(self, shape, rotations, rHeights, highest):
+  def __init__(self, shape, rotations, padRots, rHeights, highest):
     self.shape = shape
     self.rotations = rotations
+    self.paddedRotations = padRots
     self.rHeights = rHeights
     self.highest = highest
+    # TODO: self.fulls = fulls
 
   def printShape(self, rot):
     print(''.join(map(lambda x: ' '.join(map(str, x)) + "\n", self.rotations[rot][::-1].astype(int))))
     print("\n")
     return
 
+  # TODO: store possible moves historically by
   # Iterate through every rotation and column to get all possible actions
   def getPossibleMoves(self, board):
     moves = []
     for idx, rot in enumerate(self.rotations):
       for col in range(board.board.shape[1] - rot.shape[1] + 1):
         if board.tetrominoFitsInCol(col, rot, self.rHeights[idx]):
-          moves.append([col, idx])
+        #   moves.append([col, idx])
+          moves.append((idx * board.ncols) + col)
 
     return moves
