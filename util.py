@@ -15,6 +15,9 @@ def strState(board, tetromino):
 def networkState(board, tetromino):
     return np.array([np.append(board.flatten(), tetromino.flatten())])
 
+def cnnState(board, tetromino):
+    return np.reshape(np.concatenate((np.pad(tetromino, ((0, 0), (0, 3 - tetromino.shape[1])), "constant", constant_values=(False,)), board), axis=0), (1, 8, 3, 1))
+
 def epsilonGreedy(q, epsilon, possMoves):
     if random.random() < epsilon:
         return randChoice(possMoves)
