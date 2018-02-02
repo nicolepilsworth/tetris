@@ -7,6 +7,8 @@ from graph import Graph
 import util
 from qTable import learn as qTableLearn
 from qNetwork import learn as qNetworkLearn
+from cnn import learn as cnnLearn
+from policyGradient2 import learn as pgLearn
 
 def playByPolicy(Q):
   tetrominos = createTetrominos()
@@ -42,22 +44,24 @@ def playByPolicy(Q):
   print("Lines cleared: ", board.linesCleared)
 
 def randVsQ(epsilon, gamma, alpha):
-  tSteps = [10*i for i in range(1, 501)]
-
-  randAvgs = qTableLearn(epsilon, gamma, alpha, 5000, True, True)
-  qAvgs = qNetworkLearn(epsilon, gamma, alpha, 5000, True)
-  graph = Graph(tSteps, randAvgs, qAvgs)
+  nGames = 10000
+  tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
+  randAvgs = []
+  # randAvgs = qTableLearn(epsilon, gamma, alpha, nGames, True, True)
+  qAvgs = pgLearn(5, 4)
+  graph = Graph(tSteps, randAvgs, qAvgs, "Policy Gradient", epsilon, gamma, alpha, nGames)
   graph.plot()
 
 def main():
   epsilon = 0.08 # For epsilon-greedy action choice
-  gamma = 0.7 # Discount factor
-  alpha = 0.07 # Value fnction learning rate
+  gamma = 0.8 # Discount factor
+  alpha = 0.0025 # Value fnction learning rate
   nGames = 100
   rand = False # Whether to choose actions randomly of use Q-learning
 
   randVsQ(epsilon, gamma, alpha)
-  # Q = qNetworkLearn(epsilon, gamma, alpha, nGames, rand, False)
+  # Q = cnnLearn(epsilon, gamma, alpha, nGames, False)
+  # Q = qTableLearn(epsilon, gamma, alpha, nGames, rand, False)
   # playByPolicy({})
 
 if __name__ == "__main__":
