@@ -99,7 +99,8 @@ def learn(epsilon, gamma, alpha, nGames, getAvgs):
       totalLinesCleared += board.linesCleared
 
       if (i+1)%10 == 0:
-        avgs.append(totalLinesCleared/(i+1))
+        avgs.append(totalLinesCleared/10)
+        totalLinesCleared = 0
 
     # print("Lines cleared: ", board.linesCleared)
   avg = totalLinesCleared/nGames
