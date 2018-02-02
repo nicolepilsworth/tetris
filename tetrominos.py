@@ -4,10 +4,16 @@ import numpy as np
 def createTetrominos():
     shapes = [np.array(x) for x in [
       [[True, True],
+       [True, False],
        [True, False]],
 
-       [[True], [True], [True]]
+       [[True], [True], [True], [True]]
     ]]
+        #   [[True, True],
+        #    [True, False]],
+        #
+        #    [[True], [True], [True]]
+        # ]]
     # TODO: Add 'np.fulls'
     rotations = [setRotations(s) for s in shapes]
     pad = (np.max([np.max([r.shape[0] for r in x]) for x in rotations]), np.max([np.max([r.shape[1] for r in x]) for x in rotations]))
