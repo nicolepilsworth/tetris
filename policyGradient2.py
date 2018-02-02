@@ -74,9 +74,9 @@ def learn(nrows, ncols):
 
     myAgent = agent(lr=1e-2,s_size=inputLayerDim,a_size=actionsDim,h_size=200) #Load the agent.
 
-    total_episodes = 5000 #Set total number of episodes to train agent on.
+    total_episodes = 10000 #Set total number of episodes to train agent on.
     max_ep = 2000
-    update_frequency = 25
+    update_frequency = 5
 
     init = tf.global_variables_initializer()
 
@@ -99,9 +99,9 @@ def learn(nrows, ncols):
             ep_history = []
 
             for j in range(max_ep):
-                # if j == max_ep - 1:
-                #     print("reached maximum at episode ", i, " with ", running_reward)
-                # board.printBoard()
+                if j == max_ep - 1:
+                    print("reached maximum at episode ", i, " with ", running_reward)
+                board.printBoard()
                 possibleMoves = tetromino.getPossibleMoves(board)
                 d = (len(possibleMoves) == 0)
 
@@ -130,10 +130,15 @@ def learn(nrows, ncols):
                 # Probabilistically pick an action given our network outputs.
                 o, a_dist = sess.run([myAgent.output, myAgent.valid_moves],feed_dict={myAgent.state_in:[s], myAgent.p: [bool_moves]})
                 softmax_a_dist = [a_dist[0]/sum(a_dist[0])]
-                # tetromino.printShape(0)
+                tetromino.printShape(0)
 
+                # print(o)
+                # print(a_dist)
+                # print(softmax_a_dist)
+                # print()
                 a = np.random.choice(softmax_a_dist[0],p=softmax_a_dist[0])
                 a = np.argmax(softmax_a_dist == a)
+                # print(a)
 
                 rot, col = divmod(a, board.ncols)
                 r = board.act(tetromino, col, rot)
