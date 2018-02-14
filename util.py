@@ -15,8 +15,8 @@ def strState(board, tetromino):
 def networkState(board, tetromino):
     return np.array([np.append(board.flatten(), tetromino.flatten())])
 
-def cnnState(board, tetromino):
-    return np.reshape(np.concatenate((np.pad(tetromino, ((0, 0), (0, 3 - tetromino.shape[1])), "constant", constant_values=(False,)), board), axis=0), (1, 8, 3, 1))
+def cnnState(b, tetromino):
+    return np.reshape(np.concatenate((np.pad(tetromino, ((0, 0), (0, b.ncols - tetromino.shape[1])), "constant", constant_values=(False,)), b.board), axis=0), (1, b.nrows + tetromino.shape[0], b.ncols, 1))
 
 def pgState(b, tetromino):
     return np.concatenate((np.pad(tetromino, ((0, 0), (0, b.ncols - tetromino.shape[1])), "constant", constant_values=(False,)), b.board), axis=0).ravel()
