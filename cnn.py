@@ -7,9 +7,10 @@ from tetrominos import Tetromino, createTetrominos
 from board import Board
 from graph import Graph
 
-def learn(epsilon, gamma, alpha, nGames, getAvgs):
+def learn(epsilon, gamma, alpha, nGames, nRows, nCols):
+  print(epsilon, gamma, alpha, nGames)
   tetrominos = createTetrominos()
-  board = Board(5, 3)
+  board = Board(nRows, nCols)
   tShapeRows, tShapeCols = tuple(map(operator.add, tetrominos[0].shape.shape, (1, 1)))
   inputLayerDim = (board.nrows * board.ncols) + (tShapeRows * tShapeCols)
   actionsDim = board.ncols * 4
@@ -73,7 +74,7 @@ def learn(epsilon, gamma, alpha, nGames, getAvgs):
           a = util.randChoice(possibleMoves)
         else:
           boolMoves = [(x in possibleMoves) for x in range(actionsDim)]
-          s = util.cnnState(board.board, tetromino.paddedRotations[0])
+          s = util.cnnState(board, tetromino.paddedRotations[0])
           a,allQ = sess.run([predict,output_layer],feed_dict={inputs1:s, p:[boolMoves]})
           a = a[0]
 
@@ -84,7 +85,7 @@ def learn(epsilon, gamma, alpha, nGames, getAvgs):
 
         # Random Tetromino for next state
         nextTetromino = util.randChoice(tetrominos)
-        s1 = util.cnnState(board.board, nextTetromino.paddedRotations[0])
+        s1 = util.cnnState(board, nextTetromino.paddedRotations[0])
 
         Q1 = sess.run(output_layer,feed_dict={inputs1:s1})
         #Obtain maxQ' and set our target value for chosen action.
@@ -98,12 +99,12 @@ def learn(epsilon, gamma, alpha, nGames, getAvgs):
 
       totalLinesCleared += board.linesCleared
 
-      if (i+1)%10 == 0:
-        avgs.append(totalLinesCleared/10)
+      if (i+1)%100 == 0:
+        avgs.append(totalLinesCleared/100)
         totalLinesCleared = 0
 
     # print("Lines cleared: ", board.linesCleared)
-  avg = totalLinesCleared/nGames
-  avgs.append(avg)
+  # avg = totalLinesCleared/nGames
+  # avgs.append(avg)
   # print("Average lines cleared:", avg)
   return avgs
