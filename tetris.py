@@ -4,13 +4,14 @@ import random
 from tetrominos import Tetromino, createTetrominos
 from board import Board
 from graph import Graph
+from pgGraph import PgGraph
 import util
 from qTable import learn as qTableLearn
 from qNetwork import learn as qNetworkLearn
 from cnn import learn as cnnLearn
 from policyGradient2 import learn as pgLearn
 
-def playByPolicy(Q):
+def playByPolicy(Q, maxPerEpisode):
   tetrominos = createTetrominos()
   board = Board(5, 3)
   board.printBoard()
@@ -18,15 +19,17 @@ def playByPolicy(Q):
   col = 0
   rot = 0
 
-  while(True):
+  for j in range(maxPerEpisode):
     tetromino = util.randChoice(tetrominos)
+
     # Moves come in the format [columnIndex, rotationIndex]
     possibleMoves = tetromino.getPossibleMoves(board)
 
     # Game over condition
     if len(possibleMoves) == 0:
         print("GAME OVER")
-        break
+        print("Lines cleared: ", board.linesCleared)
+        return
 
     s = util.strState(board.board, tetromino.shape)
     # Check if Q(s, :) exists, use policy if it does
@@ -41,7 +44,9 @@ def playByPolicy(Q):
     r = board.act(tetromino, col, rot)
     board.printBoard()
 
+  print("Maximum number of moves reached: ", maxPerEpisode)
   print("Lines cleared: ", board.linesCleared)
+
 
 def randVsQ(epsilon, gamma, alpha):
   nGames = 10000
@@ -50,16 +55,63 @@ def randVsQ(epsilon, gamma, alpha):
   # randAvgs = qTableLearn(epsilon, gamma, alpha, nGames, True, True)
   qAvgs = pgLearn(5, 4)
   graph = Graph(tSteps, randAvgs, qAvgs, "Policy Gradient", epsilon, gamma, alpha, nGames)
-  graph.plot()
+  graph.plotRandVsQ()
+
+def learn(nGames, nRows, nCols, maxPerEpisode, batchSize):
+    tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
+    avgs = pgLearn(nRows, nCols, maxPerEpisode, batchSize, nGames)
+    graph = PgGraph(tSteps, avgs, batchSize, maxPerEpisode, nGames)
+    graph.plot()
+
 
 def main():
-  epsilon = 0.08 # For epsilon-greedy action choice
-  gamma = 0.8 # Discount factor
-  alpha = 0.0025 # Value fnction learning rate
-  nGames = 100
+  # Choose from "qTable", "qNetwork", "cnn", "policyGradient"
+  learnType = "policyGradient"
+
+  # Q-learning variables
+  epsilon = 0.2 # For epsilon-greedy action choice
+  gamma = 0.9 # Discount factor
+  alpha = 1e-2 # Value fnction learning rate
   rand = False # Whether to choose actions randomly of use Q-learning
 
-  randVsQ(epsilon, gamma, alpha)
+  # Policy gradient variables
+  batchSize = 10
+
+  # Universal variables
+  nGames = 1000
+  tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
+  nRows = 5
+  nCols = 3
+  maxPerEpisode = 1000
+  boardSize = str(nRows) + " rows *" + str(nCols) + " cols"
+
+  # Specific learn function per learn type
+  funcs = {
+    "qTable": qTableLearn,
+    "qNetwork": qNetworkLearn,
+    "cnn": cnnLearn,
+    "policyGradient": pgLearn
+  }
+
+  # Arguments to pass into learn function
+  args = {
+    "qTable": (epsilon, gamma, alpha, nGames, True, True),
+    "qNetwork": (epsilon, gamma, alpha, nGames, True),
+    "cnn": (epsilon, gamma, alpha, nGames, nRows, nCols),
+    "policyGradient": (nRows, nCols, maxPerEpisode, batchSize, nGames)
+  }
+
+  avgs = funcs[learnType](*args[learnType])
+
+  if learnType == "policyGradient":
+    graph = PgGraph(tSteps, avgs, batchSize, maxPerEpisode, nGames, boardSize)
+    graph.plot()
+  else:
+    graph = Graph(tSteps, avgs, learnType, epsilon, gamma, alpha, nGames, boardSize)
+    graph.plot()
+
+  # randVsQ(epsilon, gamma, alpha)
+  # learn(5000, 5, 4, 1000, 5)
   # Q = cnnLearn(epsilon, gamma, alpha, nGames, False)
   # Q = qTableLearn(epsilon, gamma, alpha, nGames, rand, False)
   # playByPolicy({})
