@@ -57,7 +57,7 @@ class agent():
         optimizer = tf.train.AdamOptimizer(learning_rate=lr)
         self.update_batch = optimizer.apply_gradients(zip(self.gradient_holders,tvars))
 
-def learn(nrows, ncols):
+def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
     # Tetris initialisations
     tetrominos = createTetrominos()
     board = Board(nrows, ncols)
@@ -72,11 +72,11 @@ def learn(nrows, ncols):
 
     tf.reset_default_graph() #Clear the Tensorflow graph.
 
-    myAgent = agent(lr=1e-2,s_size=inputLayerDim,a_size=actionsDim,h_size=200) #Load the agent.
+    myAgent = agent(lr=1e-2,s_size=inputLayerDim,a_size=actionsDim,h_size=8) #Load the agent.
 
-    total_episodes = 10000 #Set total number of episodes to train agent on.
-    max_ep = 2000
-    update_frequency = 5
+    total_episodes = nGames #Set total number of episodes to train agent on.
+    max_ep = maxPerEpisode
+    update_frequency = batchSize
 
     init = tf.global_variables_initializer()
 
@@ -101,7 +101,7 @@ def learn(nrows, ncols):
             for j in range(max_ep):
                 if j == max_ep - 1:
                     print("reached maximum at episode ", i, " with ", running_reward)
-                board.printBoard()
+                # board.printBoard()
                 possibleMoves = tetromino.getPossibleMoves(board)
                 d = (len(possibleMoves) == 0)
 
@@ -115,7 +115,10 @@ def learn(nrows, ncols):
                     for idx,grad in enumerate(grads):
                         gradBuffer[idx] += grad
 
+
+                    # print(i, i % update_frequency)
                     if i % update_frequency == 0 and i != 0:
+                        # print("Updating network at episode ", i)
                         feed_dict= dictionary = dict(zip(myAgent.gradient_holders, gradBuffer))
                         _ = sess.run(myAgent.update_batch, feed_dict=feed_dict)
                         for ix,grad in enumerate(gradBuffer):
@@ -130,7 +133,7 @@ def learn(nrows, ncols):
                 # Probabilistically pick an action given our network outputs.
                 o, a_dist = sess.run([myAgent.output, myAgent.valid_moves],feed_dict={myAgent.state_in:[s], myAgent.p: [bool_moves]})
                 softmax_a_dist = [a_dist[0]/sum(a_dist[0])]
-                tetromino.printShape(0)
+                # tetromino.printShape(0)
 
                 # print(o)
                 # print(a_dist)
