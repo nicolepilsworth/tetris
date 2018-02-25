@@ -5,6 +5,7 @@ from tetrominos import Tetromino, createTetrominos
 from board import Board
 from graph import Graph
 from pgGraph import PgGraph
+from compareGraph import CompareGraph
 import util
 from qTable import learn as qTableLearn
 from qNetwork import learn as qNetworkLearn
@@ -65,12 +66,13 @@ def learn(nGames, nRows, nCols, maxPerEpisode, batchSize):
 
 
 def main():
+
   # Choose from "qTable", "qNetwork", "cnn", "policyGradient"
   learnType = "policyGradient"
 
   # Q-learning variables
-  epsilon = 0.2 # For epsilon-greedy action choice
-  gamma = 0.9 # Discount factor
+  epsilon = 0.08 # For epsilon-greedy action choice
+  gamma = 0.7 # Discount factor
   alpha = 1e-2 # Value fnction learning rate
   rand = False # Whether to choose actions randomly of use Q-learning
 
@@ -83,7 +85,11 @@ def main():
   nRows = 5
   nCols = 3
   maxPerEpisode = 1000
-  boardSize = str(nRows) + " rows *" + str(nCols) + " cols"
+  boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
+
+  # compareGraph = CompareGraph(tSteps)
+  # compareGraph.plot()
+  # return
 
   # Specific learn function per learn type
   funcs = {
@@ -92,6 +98,13 @@ def main():
     "cnn": cnnLearn,
     "policyGradient": pgLearn
   }
+
+  # thresholds = {
+  #   "qTable": 0,
+  #   "qNetwork": 0,
+  #   "cnn": 40,
+  #   "policyGradient": 100
+  # }
 
   # Arguments to pass into learn function
   args = {
@@ -102,6 +115,13 @@ def main():
   }
 
   avgs = funcs[learnType](*args[learnType])
+
+  # # Repeat if threshold not reached
+  # while avgs[-1] < thresholds[learnType]:
+  #   print("threshold not reached")
+  #   avgs = funcs[learnType](*args[learnType])
+
+  print(avgs)
 
   if learnType == "policyGradient":
     graph = PgGraph(tSteps, avgs, batchSize, maxPerEpisode, nGames, boardSize)

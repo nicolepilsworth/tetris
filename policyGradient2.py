@@ -101,7 +101,8 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
             for j in range(max_ep):
                 if j == max_ep - 1:
                     print("reached maximum at episode ", i, " with ", running_reward)
-                # board.printBoard()
+                # if i % 500 == 0:
+                #   board.printBoard()
                 possibleMoves = tetromino.getPossibleMoves(board)
                 d = (len(possibleMoves) == 0)
 
@@ -133,7 +134,8 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
                 # Probabilistically pick an action given our network outputs.
                 o, a_dist = sess.run([myAgent.output, myAgent.valid_moves],feed_dict={myAgent.state_in:[s], myAgent.p: [bool_moves]})
                 softmax_a_dist = [a_dist[0]/sum(a_dist[0])]
-                # tetromino.printShape(0)
+                # if i % 500 == 0:
+                #   tetromino.printShape(0)
 
                 # print(o)
                 # print(a_dist)
