@@ -80,10 +80,10 @@ def main():
   batchSize = 10
 
   # Universal variables
-  nGames = 5000
+  nGames = 20000
   tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
-  nRows = 16
-  nCols = 10
+  nRows = 8
+  nCols = 6
   maxPerEpisode = 1000
   boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
 
@@ -123,12 +123,12 @@ def main():
 
   print(avgs)
 
-  # if learnType == "policyGradient":
-  #   graph = PgGraph(tSteps, avgs, batchSize, maxPerEpisode, nGames, boardSize)
-  #   graph.plot()
-  # else:
-  #   graph = Graph(tSteps, avgs, learnType, epsilon, gamma, alpha, nGames, boardSize)
-  #   graph.plot()
+  if learnType == "policyGradient":
+    graph = PgGraph(tSteps, avgs, batchSize, maxPerEpisode, nGames, boardSize)
+    graph.plot()
+  else:
+    graph = Graph(tSteps, avgs, learnType, epsilon, gamma, alpha, nGames, boardSize)
+    graph.plot()
 
   # randVsQ(epsilon, gamma, alpha)
   # learn(5000, 5, 4, 1000, 5)

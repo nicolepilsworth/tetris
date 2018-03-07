@@ -28,8 +28,9 @@ class agent():
     def __init__(self, lr, s_size,a_size,h_size):
         #These lines established the feed-forward part of the network. The agent takes a state and produces an action.
         self.state_in= tf.placeholder(shape=[None,s_size],dtype=tf.float32)
-        hidden = slim.fully_connected(self.state_in,h_size,biases_initializer=None,activation_fn=tf.nn.relu)
-        self.output = slim.fully_connected(hidden,a_size,activation_fn=tf.nn.softmax,biases_initializer=None)
+        hidden = slim.fully_connected(self.state_in,h_size,biases_initializer=None,activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer())
+        hidden2 = slim.fully_connected(hidden,32,biases_initializer=None,activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer())
+        self.output = slim.fully_connected(hidden2,a_size,activation_fn=tf.nn.softmax,biases_initializer=None, weights_initializer=tf.contrib.layers.xavier_initializer())
 
         self.p = tf.placeholder(tf.bool, [1,a_size])
         self.invalid_moves = tf.constant(0., shape=[1,a_size])
@@ -72,7 +73,7 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
 
     tf.reset_default_graph() #Clear the Tensorflow graph.
 
-    myAgent = agent(lr=1e-2,s_size=inputLayerDim,a_size=actionsDim,h_size=8) #Load the agent.
+    myAgent = agent(lr=1e-2,s_size=inputLayerDim,a_size=actionsDim,h_size=32) #Load the agent.
 
     total_episodes = nGames #Set total number of episodes to train agent on.
     max_ep = maxPerEpisode
@@ -101,8 +102,8 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
             for j in range(max_ep):
                 if j == max_ep - 1:
                     print("reached maximum at episode ", i, " with ", running_reward)
-                # if i % 500 == 0:
-                #   board.printBoard()
+                if i % 500 == 0:
+                  board.printBoard()
                 possibleMoves = tetromino.getPossibleMoves(board)
                 d = (len(possibleMoves) == 0)
 
@@ -134,16 +135,18 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
                 # Probabilistically pick an action given our network outputs.
                 o, a_dist = sess.run([myAgent.output, myAgent.valid_moves],feed_dict={myAgent.state_in:[s], myAgent.p: [bool_moves]})
                 softmax_a_dist = [a_dist[0]/sum(a_dist[0])]
-                # if i % 500 == 0:
-                #   tetromino.printShape(0)
 
                 # print(o)
                 # print(a_dist)
-                # print(softmax_a_dist)
+
+
                 # print()
                 a = np.random.choice(softmax_a_dist[0],p=softmax_a_dist[0])
                 a = np.argmax(softmax_a_dist == a)
-                # print(a)
+                if i % 500 == 0:
+                    tetromino.printShape(0)
+                    print(softmax_a_dist)
+                    print(a)
 
                 rot, col = divmod(a, board.ncols)
                 r = board.act(tetromino, col, rot)
@@ -161,7 +164,7 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
                 #Update our running tally of scores.
             if i % 100 == 0:
                 current_avg = np.mean(total_reward[-100:])
-                print(current_avg)
+                print(i, ' : ', current_avg)
                 avgs.append(current_avg)
             i += 1
     return avgs
