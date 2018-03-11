@@ -119,7 +119,10 @@ class Worker():
                         feed_dict={self.local_AC.imageIn:s})
 
                     valid_moves = [x if i in possibleMoves else 0. for i, x in enumerate(a_dist[0])]
-                    softmax_a_dist = [valid_moves/sum(valid_moves)]
+                    try:
+                      softmax_a_dist = [valid_moves/sum(valid_moves)]
+                    except:
+                      break
                     a = np.random.choice(softmax_a_dist[0],p=softmax_a_dist[0])
                     a = np.argmax(softmax_a_dist == a)
                     # print(softmax_a_dist)
@@ -127,7 +130,7 @@ class Worker():
                     rot, col = divmod(a, self.board.ncols)
                     # print(rot, col)
                     r = self.board.act(tetromino, col, rot)
-
+                    
                     nextTetromino = util.randChoice(tetrominos)
                     s1 = util.cnnState(self.board, nextTetromino.paddedRotations[0])
 

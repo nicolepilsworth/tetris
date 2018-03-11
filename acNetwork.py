@@ -31,7 +31,7 @@ class AC_Network():
             self.imageIn = tf.placeholder(shape=s_size,dtype=tf.float32,name="imageIn")
             self.conv1 = slim.conv2d(activation_fn=tf.nn.elu,
                 inputs=self.imageIn,num_outputs=16,
-                kernel_size=[4,4],stride=[2,2],padding='VALID')
+                kernel_size=[3,3],stride=[1,1],padding='VALID')
             # (previously [8, 8], [4, 4])
             self.conv2 = slim.conv2d(activation_fn=tf.nn.elu,
                 inputs=self.conv1,num_outputs=32,
