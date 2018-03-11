@@ -11,6 +11,7 @@ from qTable import learn as qTableLearn
 from qNetwork import learn as qNetworkLearn
 from cnn import learn as cnnLearn
 from policyGradient2 import learn as pgLearn
+from a3c import train as a3cTrain
 
 def playByPolicy(Q, maxPerEpisode):
   tetrominos = createTetrominos()
@@ -68,7 +69,7 @@ def learn(nGames, nRows, nCols, maxPerEpisode, batchSize):
 def main():
 
   # Choose from "qTable", "qNetwork", "cnn", "policyGradient"
-  learnType = "policyGradient"
+  learnType = "a3c"
 
   # Q-learning variables
   epsilon = 0.08 # For epsilon-greedy action choice
@@ -78,6 +79,7 @@ def main():
 
   # Policy gradient variables
   batchSize = 10
+  saveFreq = 100
 
   # Universal variables
   nGames = 20000
@@ -96,7 +98,8 @@ def main():
     "qTable": qTableLearn,
     "qNetwork": qNetworkLearn,
     "cnn": cnnLearn,
-    "policyGradient": pgLearn
+    "policyGradient": pgLearn,
+    "a3c": a3cTrain
   }
 
   # thresholds = {
@@ -111,7 +114,8 @@ def main():
     "qTable": (epsilon, gamma, alpha, nGames, True, True),
     "qNetwork": (epsilon, gamma, alpha, nGames, True),
     "cnn": (epsilon, gamma, alpha, nGames, nRows, nCols),
-    "policyGradient": (nRows, nCols, maxPerEpisode, batchSize, nGames)
+    "policyGradient": (nRows, nCols, maxPerEpisode, batchSize, nGames),
+    "a3c": (nRows, nCols, maxPerEpisode, saveFreq)
   }
 
   avgs = funcs[learnType](*args[learnType])
