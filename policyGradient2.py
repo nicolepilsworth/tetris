@@ -116,8 +116,8 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
             for j in range(max_ep):
                 if j == max_ep - 1:
                     print("reached maximum at episode ", i, " with ", running_reward)
-                if i % 500 == 0:
-                  board.printBoard()
+                # if i % 500 == 0:
+                #   board.printBoard()
                 possibleMoves = tetromino.getPossibleMoves(board)
                 d = (len(possibleMoves) == 0)
 
@@ -157,8 +157,8 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
                 # print()
                 a = np.random.choice(softmax_a_dist[0],p=softmax_a_dist[0])
                 a = np.argmax(softmax_a_dist == a)
-                if i % 500 == 0:
-                    tetromino.printShape(0)
+                # if i % 500 == 0:
+                #     tetromino.printShape(0)
                     # print(softmax_a_dist)
                     # print(a)
 

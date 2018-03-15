@@ -28,16 +28,20 @@ class AC_Network():
 
         with tf.variable_scope(scope):
             #Input and visual encoding layers
-            self.imageIn = tf.placeholder(shape=s_size,dtype=tf.float32,name="imageIn")
-            self.conv1 = slim.conv2d(activation_fn=tf.nn.elu,
-                inputs=self.imageIn,num_outputs=16,
-                kernel_size=[3,3],stride=[1,1],padding='VALID')
-            # (previously [8, 8], [4, 4])
-            self.conv2 = slim.conv2d(activation_fn=tf.nn.elu,
-                inputs=self.conv1,num_outputs=32,
-                kernel_size=[2,2],stride=[1,1],padding='VALID')
-            hidden = slim.fully_connected(slim.flatten(self.conv2),256,activation_fn=tf.nn.elu)
-
+            self.inputs = tf.placeholder(shape=[None,s_size[1]*s_size[2]],dtype=tf.float32)
+            self.imageIn = tf.reshape(self.inputs,shape=s_size)
+            self.conv1 = tf.layers.conv2d(inputs=self.imageIn, filters=32, kernel_size=[3, 3])
+            # self.conv2 = tf.layers.conv2d(inputs=self.conv1, filters=64, kernel_size=[3, 3])
+            # self.conv1 = tf.nn.conv2d(activation_fn=tf.nn.elu,
+            #     inputs=self.imageIn,num_outputs=32,
+            #     kernel_size=[3,3],stride=[1,1],padding='VALID')
+            # # (previously [8, 8], [4, 4])
+            # self.conv2 = tf.nn.conv2d(activation_fn=tf.nn.elu,
+            #     inputs=self.conv1,num_outputs=32,
+            #     kernel_size=[3,3],stride=[1,1],padding='VALID')
+            # hidden = slim.fully_connected(slim.flatten(self.conv2),128,activation_fn=tf.nn.elu)
+            flatten_layer = tf.contrib.layers.flatten(self.conv1)
+            dense_connected_layer = tf.contrib.layers.fully_connected(flatten_layer, 48, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
             # #Recurrent network for temporal dependencies
             # lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(256,state_is_tuple=True)
             # c_init = np.zeros((1, lstm_cell.state_size.c), np.float32)
@@ -57,11 +61,11 @@ class AC_Network():
             # rnn_out = tf.reshape(lstm_outputs, [-1, 256])
 
             #Output layers for policy and value estimations
-            self.policy = slim.fully_connected(hidden,a_size,
+            self.policy = slim.fully_connected(dense_connected_layer,a_size,
                 activation_fn=tf.nn.softmax,
                 weights_initializer=normalized_columns_initializer(0.01),
                 biases_initializer=None)
-            self.value = slim.fully_connected(hidden,1,
+            self.value = slim.fully_connected(dense_connected_layer,1,
                 activation_fn=None,
                 weights_initializer=normalized_columns_initializer(1.0),
                 biases_initializer=None)

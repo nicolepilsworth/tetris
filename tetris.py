@@ -1,6 +1,9 @@
 import pprint
 import numpy as np
 import random
+import multiprocessing
+import time
+import cProfile
 from tetrominos import Tetromino, createTetrominos
 from board import Board
 from graph import Graph
@@ -126,6 +129,7 @@ def main():
   #   avgs = funcs[learnType](*args[learnType])
 
   print(avgs)
+  return
 
   if learnType == "policyGradient":
     graph = PgGraph(tSteps, avgs, batchSize, maxPerEpisode, nGames, boardSize)
@@ -142,3 +146,4 @@ def main():
 
 if __name__ == "__main__":
   main()
+  # main()

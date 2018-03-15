@@ -57,6 +57,7 @@ def padRotations(shapes, pad):
   padRows, padCols = pad
   return [np.pad(x, ((0, padRows - x.shape[0]), (0, padCols - x.shape[1])), "constant", constant_values=(False,)) for x in shapes]
 
+
 # Return array containing column heights of every rotation
 def setHeights(shapes):
   return [height(s, "rHeight") for s in shapes], [height(s, "highest") for s in shapes]
