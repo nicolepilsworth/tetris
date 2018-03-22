@@ -18,6 +18,10 @@ from board import Board
 from acNetwork import AC_Network
 from worker import Worker
 
+def stop_training(coord):
+  print("stopping training")
+  coord.request_stop()
+
 def train(nrows, ncols, max_episode_length, saveFreq):
     '''please document my functionality :('''
     max_episode_length = 10000
@@ -41,7 +45,8 @@ def train(nrows, ncols, max_episode_length, saveFreq):
     tf.reset_default_graph()
 
     global_episodes = tf.Variable(0,dtype=tf.int32,name='global_episodes',trainable=False)
-    trainer = tf.train.RMSPropOptimizer(learning_rate=7e-4, decay=0.99, epsilon=0.1)
+    # trainer = tf.train.RMSPropOptimizer(learning_rate=7e-4, decay=0.99, epsilon=0.1)
+    trainer = tf.train.AdamOptimizer(learning_rate=7e-4)
     master_network = AC_Network(s_size,a_size,'global',None) # Generate global network
     # num_workers = 1
     num_workers = multiprocessing.cpu_count() # Set workers ot number of available CPU threads
@@ -53,6 +58,9 @@ def train(nrows, ncols, max_episode_length, saveFreq):
 
     with tf.Session() as sess:
         coord = tf.train.Coordinator()
+        main_timer = threading.Timer((60 * 60 * 6) - (60 * 15), stop_training, args=(coord,))
+        main_timer.start()
+
         sess.run(tf.global_variables_initializer())
 
         # This is where the asynchronous magic happens.

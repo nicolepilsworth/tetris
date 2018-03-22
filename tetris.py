@@ -86,7 +86,7 @@ def main():
   tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
   nRows = 8
   nCols = 6
-  maxPerEpisode = 1000
+  maxPerEpisode = 500
   boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
 
   # compareGraph = CompareGraph(tSteps)

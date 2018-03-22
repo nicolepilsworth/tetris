@@ -103,15 +103,11 @@ class Worker():
                 self.board.reset()
                 tetromino = util.randChoice(tetrominos)
                 possibleMoves = tetromino.getPossibleMoves(self.board)
-                done = (len(possibleMoves) == 0)
                 s = util.cnnState(self.board, tetromino.paddedRotations[0])
 
                 episode_frames.append(s)
 
-                done = False
                 while True:
-                    if done:
-                        break
 
                     # bool_moves = [(x in possibleMoves) for x in range(self.a_size)]
                     #Take an action using probabilities from policy network output.
@@ -119,18 +115,21 @@ class Worker():
                         feed_dict={self.local_AC.imageIn:s})
 
                     valid_moves = [x if i in possibleMoves else 0. for i, x in enumerate(a_dist[0])]
-                    try:
-                      softmax_a_dist = [valid_moves/sum(valid_moves)]
-                    except:
-                      break
-                    a = np.random.choice(softmax_a_dist[0],p=softmax_a_dist[0])
-                    a = np.argmax(softmax_a_dist == a)
+                    sum_v = sum(valid_moves)
+
+                    if sum_v == 0:
+                      a = util.randChoice(possibleMoves)
+                    else:
+                      softmax_a_dist = [valid_moves/sum_v]
+                      a = np.random.choice(softmax_a_dist[0],p=softmax_a_dist[0])
+                      a = np.argmax(softmax_a_dist == a)
+
                     # print(softmax_a_dist)
                     # print(a)
                     rot, col = divmod(a, self.board.ncols)
                     # print(rot, col)
                     r = self.board.act(tetromino, col, rot)
-                    
+
                     nextTetromino = util.randChoice(tetrominos)
                     s1 = util.cnnState(self.board, nextTetromino.paddedRotations[0])
 
@@ -161,7 +160,10 @@ class Worker():
                     #     v_l,p_l,e_l,g_n,v_n, adv = self.train(global_AC,episode_buffer,sess,gamma,v1)
                     #     episode_buffer = []
                     #     sess.run(self.update_local_ops)
-                    if  episode_step_count >= max_episode_length - 1 or d == True:
+                    if  episode_step_count >= max_episode_length - 1:
+                        print("reached max")
+                        break
+                    elif d == True:
                         break
 
                 self.episode_rewards.append(episode_reward)
@@ -181,6 +183,6 @@ class Worker():
                     mean_value = np.mean(self.episode_mean_values[-saveFreq:])
                     print(mean_reward)
 
-                #if self.name == 'worker_0':
-                sess.run(self.increment)
+                if self.name == 'worker_0':
+                    sess.run(self.increment)
                 episode_count += 1
