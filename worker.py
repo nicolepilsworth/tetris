@@ -2,6 +2,7 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import numpy as np
 import util
+import random
 import operator
 import threading
 import multiprocessing
@@ -58,6 +59,7 @@ class Worker():
         rewards = rollout[:,2]
         next_observations = rollout[:,3]
         values = rollout[:,5]
+        tetrominos_seen = rollout[:,6]
 
         # Here we take the rewards and values from the rollout, and use them to
         # generate the advantage and discounted returns.
@@ -72,6 +74,7 @@ class Worker():
         # Generate network statistics to periodically save
         feed_dict = {self.local_AC.target_v:discounted_rewards,
             self.local_AC.imageIn:np.vstack(observations),
+            self.local_AC.tetromino:np.vstack(tetrominos_seen),
             self.local_AC.actions:actions,
             self.local_AC.advantages:advantages}
         v_l,p_l,e_l,g_n,v_n,adv, apl_g = sess.run([self.local_AC.value_loss,
@@ -89,6 +92,7 @@ class Worker():
         total_steps = 0
         print("Starting worker " + str(self.number))
         tetrominos = createTetrominos()
+        n_tetrominos = len(tetrominos) - 1
 
         with sess.as_default(), sess.graph.as_default():
             while not coord.should_stop():
@@ -101,19 +105,20 @@ class Worker():
                 d = False
 
                 self.board.reset()
-                tetromino = util.randChoice(tetrominos)
+                tetromino_idx = random.randint(0, n_tetrominos)
+                tetromino = tetrominos[tetromino_idx]
                 possibleMoves = tetromino.getPossibleMoves(self.board)
-                s = util.cnnState(self.board, tetromino.paddedRotations[0])
+                s = util.a3cState(self.board)
 
                 episode_frames.append(s)
 
                 while True:
-
                     # bool_moves = [(x in possibleMoves) for x in range(self.a_size)]
                     #Take an action using probabilities from policy network output.
                     a_dist,v = sess.run([self.local_AC.policy,self.local_AC.value],
-                        feed_dict={self.local_AC.imageIn:s})
-
+                        feed_dict={self.local_AC.imageIn:s,
+                                    self.local_AC.tetromino:np.reshape(tetromino_idx, (1, 1))})
+                    # print(t_onehot)
                     valid_moves = [x if i in possibleMoves else 0. for i, x in enumerate(a_dist[0])]
                     sum_v = sum(valid_moves)
 
@@ -130,18 +135,20 @@ class Worker():
                     # print(rot, col)
                     r = self.board.act(tetromino, col, rot)
 
-                    nextTetromino = util.randChoice(tetrominos)
-                    s1 = util.cnnState(self.board, nextTetromino.paddedRotations[0])
+                    nextTetrominoIdx = random.randint(0, n_tetrominos)
+                    nextTetromino = tetrominos[nextTetrominoIdx]
+                    s1 = util.a3cState(self.board)
 
                     possibleMoves = nextTetromino.getPossibleMoves(self.board)
                     d = (len(possibleMoves) == 0)
 
                     episode_frames.append(s1)
 
-                    episode_buffer.append([s,a,r,s1,d,v[0,0]])
+                    episode_buffer.append([s,a,r,s1,d,v[0,0],np.reshape(tetromino_idx, (1, 1))])
                     episode_values.append(v[0,0])
 
                     tetromino = nextTetromino
+                    tetromino_idx = nextTetrominoIdx
 
                     episode_reward += r
                     s = s1

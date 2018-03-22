@@ -23,7 +23,6 @@ def stop_training(coord):
   coord.request_stop()
 
 def train(nrows, ncols, max_episode_length, saveFreq):
-    '''please document my functionality :('''
     max_episode_length = 10000
     gamma = .99 # discount rate for advantage estimation and reward discounting
 
@@ -31,11 +30,11 @@ def train(nrows, ncols, max_episode_length, saveFreq):
     tetrominos = createTetrominos()
     board = Board(nrows, ncols)
 
-    t = tetrominos[0].paddedRotations[0]
-    t_rows, t_cols = t.shape[0], t.shape[1]
+    # t = tetrominos[0].paddedRotations[0]
+    # t_rows, t_cols = t.shape[0], t.shape[1]
     s_size = [
       None,
-      board.nrows + t_rows,
+      board.nrows,
       board.ncols,
       1
     ]
