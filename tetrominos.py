@@ -14,23 +14,23 @@ def createTetrominos():
 
        [[True], [True], [True], [True]],
 
-    #    [[False, True, False],
-    #    [True, True, True]]
+       [[False, True, False],
+       [True, True, True]],
     #
-    #    [[True, True],
-    #    [False, True],
-    #    [False, True]]
+       [[True, True],
+       [False, True],
+       [False, True]],
 
-    #    [[True, True, False],
-    #    [False, True, True]],
+       [[True, True, False],
+       [False, True, True]],
        #
-    #    [[False, True, True],
-    #    [True, True, False]]
+       [[False, True, True],
+       [True, True, False]],
        #
        [[True, True],
        [True, True]]
     ]]
-    # TODO: Add 'np.fulls'
+
     rotations = [setRotations(s) for s in shapes]
     pad = (np.max([np.max([r.shape[0] for r in x]) for x in rotations]), np.max([np.max([r.shape[1] for r in x]) for x in rotations]))
     return [Tetromino(s, rotations[i], padRotations(rotations[i], pad), *setHeights(rotations[i])) for i, s in enumerate(shapes)]
