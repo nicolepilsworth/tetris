@@ -12,6 +12,7 @@ import scipy.signal
 
 from random import choice
 from time import time
+from time import sleep
 
 from tetrominos import Tetromino, createTetrominos
 from board import Board
@@ -90,6 +91,7 @@ class Worker():
     def work(self,max_episode_length,gamma,global_AC,sess,coord,saveFreq):
         episode_count = sess.run(self.global_episodes)
         total_steps = 0
+        actions_list = np.arange(self.a_size)
         print("Starting worker " + str(self.number))
         tetrominos = createTetrominos()
         n_tetrominos = len(tetrominos) - 1
@@ -119,16 +121,21 @@ class Worker():
                         feed_dict={self.local_AC.imageIn:s,
                                     self.local_AC.tetromino:np.reshape(tetromino_idx, (1, 1))})
                     # print(t_onehot)
+                    # tetromino.printShape(0)
+                    # self.board.printBoard()
                     valid_moves = [x if i in possibleMoves else 0. for i, x in enumerate(a_dist[0])]
                     sum_v = sum(valid_moves)
+
 
                     if sum_v == 0:
                       a = util.randChoice(possibleMoves)
                     else:
                       softmax_a_dist = [valid_moves/sum_v]
-                      a = np.random.choice(softmax_a_dist[0],p=softmax_a_dist[0])
-                      a = np.argmax(softmax_a_dist == a)
+                    #   print(softmax_a_dist)
+                      a = np.random.choice(actions_list,p=softmax_a_dist[0])
+                    #   print(a)
 
+                    # sleep(10)
                     # print(softmax_a_dist)
                     # print(a)
                     rot, col = divmod(a, self.board.ncols)
