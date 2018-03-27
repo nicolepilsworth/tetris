@@ -11,7 +11,6 @@ from time import sleep
 from time import time
 
 from random import choice
-from time import time
 
 from tetrominos import Tetromino, createTetrominos
 from board import Board
