@@ -126,6 +126,7 @@ def main():
   #   avgs = funcs[learnType](*args[learnType])
 
   print(avgs)
+  return
 
   if learnType == "policyGradient":
     graph = PgGraph(tSteps, avgs, batchSize, maxPerEpisode, nGames, boardSize)
