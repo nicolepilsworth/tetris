@@ -30,11 +30,11 @@ class AC_Network():
             #Input and visual encoding layers
             self.imageIn = tf.placeholder(shape=s_size,dtype=tf.float32,name="imageIn")
             self.conv1 = slim.conv2d(activation_fn=tf.nn.relu,
-                inputs=self.imageIn,num_outputs=16,
-                kernel_size=[4,4],stride=[1,1],padding='VALID', weights_initializer=tf.contrib.layers.xavier_initializer())
+                inputs=self.imageIn,num_outputs=2,
+                kernel_size=[3,3],stride=[1,1],padding='VALID', weights_initializer=tf.contrib.layers.xavier_initializer())
             # (previously [8, 8], [4, 4])
             self.conv2 = slim.conv2d(activation_fn=tf.nn.relu,
-                inputs=self.conv1,num_outputs=16,
+                inputs=self.conv1,num_outputs=4,
                 kernel_size=[1,1],stride=[1,1],padding='VALID', weights_initializer=tf.contrib.layers.xavier_initializer())
             self.dense_layer = slim.flatten(self.conv2)
 
@@ -43,7 +43,7 @@ class AC_Network():
 
             self.concat_layer = tf.concat([self.tetromino_onehot, self.dense_layer], 1)
 
-            hidden = slim.fully_connected(self.dense_layer,128,activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer())
+            hidden = slim.fully_connected(self.dense_layer,24,activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer())
 
             # #Recurrent network for temporal dependencies
             # lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(256,state_is_tuple=True)
