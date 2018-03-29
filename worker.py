@@ -109,6 +109,7 @@ class Worker():
 
                 self.board.reset()
                 tetromino_idx = random.randint(0, n_tetrominos)
+                tetromino_AC = np.reshape(tetromino_idx, (1, 1))
                 tetromino = tetrominos[tetromino_idx]
                 # tetromino.printShape(0)
                 possibleMoves = tetromino.getPossibleMoves(self.board)
@@ -119,17 +120,18 @@ class Worker():
                 while True:
                     # bool_moves = [(x in possibleMoves) for x in range(self.a_size)]
                     #Take an action using probabilities from policy network output.
+
                     a_dist,v = sess.run([self.local_AC.policy,self.local_AC.value],
                         feed_dict={self.local_AC.imageIn:s,
-                                    self.local_AC.tetromino:np.reshape(tetromino_idx, (1, 1))})
+                                    self.local_AC.tetromino:tetromino_AC})
                     # if (episode_count % 20 == 0):
                     #     print(a_dist)
                     # tetromino.printShape(0)
                     # self.board.printBoard()
 
-                    best_features = self.board.findBestMoves(possibleMoves, tetromino)
-                    best_moves = list(map(lambda x: x.pos, best_features))
-                    # best_moves = possibleMoves
+                    # best_features = self.board.findBestMoves(possibleMoves, tetromino)
+                    # best_moves = list(map(lambda x: x.pos, best_features))
+                    best_moves = possibleMoves
 
                     # import pdb; pdb.set_trace()
                     # print(len(best_moves))
@@ -161,7 +163,7 @@ class Worker():
 
                     episode_frames.append(s1)
 
-                    episode_buffer.append([s,a,r,s1,d,v[0,0],np.reshape(tetromino_idx, (1, 1))])
+                    episode_buffer.append([s,a,r,s1,d,v[0,0],tetromino_AC])
                     episode_values.append(v[0,0])
 
                     tetromino = nextTetromino
@@ -174,16 +176,14 @@ class Worker():
 
                     # # If the episode hasn't ended, but the experience buffer is full, then we
                     # # make an update step using that experience rollout.
-                    # if len(episode_buffer) ==  and d != True:
-                    #     # Since we don't know what the true final return is, we "bootstrap" from our current
-                    #     # value estimation.
-                    #     v1 = sess.run(self.local_AC.value,
-                    #         feed_dict={self.local_AC.imageIn:s,
-                    #         self.local_AC.state_in[0]:rnn_state[0],
-                    #         self.local_AC.state_in[1]:rnn_state[1]})[0,0]
-                    #     v_l,p_l,e_l,g_n,v_n, adv = self.train(global_AC,episode_buffer,sess,gamma,v1)
-                    #     episode_buffer = []
-                    #     sess.run(self.update_local_ops)
+                    if len(episode_buffer) == 30 and d != True:
+                        # Since we don't know what the true final return is, we "bootstrap" from our current
+                        # value estimation.
+                        v1 = sess.run(self.local_AC.value,
+                            feed_dict={self.local_AC.imageIn:s})[0,0]
+                        v_l,p_l,e_l,g_n,v_n, adv = self.train(global_AC,episode_buffer,sess,gamma,v1)
+                        episode_buffer = []
+                        sess.run(self.update_local_ops)
                     if  episode_step_count >= max_episode_length - 1:
                         print("reached max")
                         break
