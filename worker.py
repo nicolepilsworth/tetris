@@ -1,6 +1,7 @@
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 import numpy as np
+import pandas as pd
 import util
 import random
 import operator
@@ -109,6 +110,7 @@ class Worker():
                 self.board.reset()
                 tetromino_idx = random.randint(0, n_tetrominos)
                 tetromino = tetrominos[tetromino_idx]
+                # tetromino.printShape(0)
                 possibleMoves = tetromino.getPossibleMoves(self.board)
                 s = util.a3cState(self.board)
 
@@ -123,12 +125,16 @@ class Worker():
                     # print(t_onehot)
                     # tetromino.printShape(0)
                     # self.board.printBoard()
-                    valid_moves = [x if i in possibleMoves else 0. for i, x in enumerate(a_dist[0])]
+                    best_features = self.board.findBestMoves(possibleMoves, tetromino)
+                    best_moves = list(map(lambda x: x.pos, best_features))
+                    # import pdb; pdb.set_trace()
+                    # print(len(best_moves))
+                    valid_moves = [x if i in best_moves else 0. for i, x in enumerate(a_dist[0])]
+
                     sum_v = sum(valid_moves)
 
-
                     if sum_v == 0:
-                      a = util.randChoice(possibleMoves)
+                      a = util.randChoice(best_moves)
                     else:
                       softmax_a_dist = [valid_moves/sum_v]
                     #   print(softmax_a_dist)
@@ -140,7 +146,7 @@ class Worker():
                     # print(a)
                     rot, col = divmod(a, self.board.ncols)
                     # print(rot, col)
-                    r = self.board.act(tetromino, col, rot)
+                    r = self.board.act(tetromino, col, rot, False)
 
                     nextTetrominoIdx = random.randint(0, n_tetrominos)
                     nextTetromino = tetrominos[nextTetrominoIdx]

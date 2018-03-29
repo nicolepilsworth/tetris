@@ -79,12 +79,12 @@ def main():
 
   # Policy gradient variables
   batchSize = 10
-  saveFreq = 100
+  saveFreq = 20
 
   # Universal variables
   nGames = 20000
   tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
-  nRows = 4
+  nRows = 5
   nCols = 10
   maxPerEpisode = 500
   boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
@@ -125,15 +125,14 @@ def main():
   #   print("threshold not reached")
   #   avgs = funcs[learnType](*args[learnType])
 
-  print(avgs)
-  return
 
-  if learnType == "policyGradient":
-    graph = PgGraph(tSteps, avgs, batchSize, maxPerEpisode, nGames, boardSize)
-    graph.plot()
-  else:
-    graph = Graph(tSteps, avgs, learnType, epsilon, gamma, alpha, nGames, boardSize)
-    graph.plot()
+
+  # if learnType == "policyGradient":
+  #   graph = PgGraph(tSteps, avgs, batchSize, maxPerEpisode, nGames, boardSize)
+  #   graph.plot()
+  # else:
+  #   graph = Graph(tSteps, avgs, learnType, epsilon, gamma, alpha, nGames, boardSize)
+  #   graph.plot()
 
   # randVsQ(epsilon, gamma, alpha)
   # learn(5000, 5, 4, 1000, 5)

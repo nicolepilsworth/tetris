@@ -46,8 +46,8 @@ def train(nrows, ncols, max_episode_length, saveFreq):
     # trainer = tf.train.RMSPropOptimizer(learning_rate=7e-4, decay=0.99, epsilon=0.1)
     trainer = tf.train.AdamOptimizer(learning_rate=7e-4)
     master_network = AC_Network(s_size,a_size,'global',None) # Generate global network
-    # num_workers = 1
-    num_workers = multiprocessing.cpu_count() # Set workers ot number of available CPU threads
+    num_workers = 1
+    # num_workers = multiprocessing.cpu_count() # Set workers ot number of available CPU threads
     workers = []
     # Create worker classes
     for i in range(num_workers):
