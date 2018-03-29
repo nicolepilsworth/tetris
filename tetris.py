@@ -84,8 +84,8 @@ def main():
   # Universal variables
   nGames = 20000
   tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
-  nRows = 6
-  nCols = 8
+  nRows = 4
+  nCols = 10
   maxPerEpisode = 500
   boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
 

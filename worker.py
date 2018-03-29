@@ -168,6 +168,7 @@ class Worker():
 
                     tetromino = nextTetromino
                     tetromino_idx = nextTetrominoIdx
+                    tetromino_AC = np.reshape(tetromino_idx, (1, 1))
 
                     episode_reward += r
                     s = s1
