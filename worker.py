@@ -122,11 +122,15 @@ class Worker():
                     a_dist,v = sess.run([self.local_AC.policy,self.local_AC.value],
                         feed_dict={self.local_AC.imageIn:s,
                                     self.local_AC.tetromino:np.reshape(tetromino_idx, (1, 1))})
-                    # print(t_onehot)
+                    # if (episode_count % 20 == 0):
+                    #     print(a_dist)
                     # tetromino.printShape(0)
                     # self.board.printBoard()
+
                     best_features = self.board.findBestMoves(possibleMoves, tetromino)
                     best_moves = list(map(lambda x: x.pos, best_features))
+                    # best_moves = possibleMoves
+
                     # import pdb; pdb.set_trace()
                     # print(len(best_moves))
                     valid_moves = [x if i in best_moves else 0. for i, x in enumerate(a_dist[0])]

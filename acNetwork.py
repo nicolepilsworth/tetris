@@ -29,21 +29,23 @@ class AC_Network():
         with tf.variable_scope(scope):
             #Input and visual encoding layers
             self.imageIn = tf.placeholder(shape=s_size,dtype=tf.float32,name="imageIn")
+            # self.h1 = tf.contrib.layers.fully_connected(self.imageIn, 32, activation_fn=tf.nn.softplus, weights_initializer=tf.contrib.layers.xavier_initializer())
             self.conv1 = slim.conv2d(activation_fn=tf.nn.relu,
-                inputs=self.imageIn,num_outputs=24,
-                kernel_size=[3,3],stride=[1,1],padding='VALID', weights_initializer=tf.contrib.layers.xavier_initializer())
+                inputs=self.imageIn,num_outputs=32,
+                kernel_size=[3,3],stride=[1,1],padding='SAME', weights_initializer=tf.contrib.layers.xavier_initializer())
+            self.h2 = tf.contrib.layers.fully_connected(self.conv1, 16, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer())
             # (previously [8, 8], [4, 4])
-            self.conv2 = slim.conv2d(activation_fn=tf.nn.relu,
-                inputs=self.conv1,num_outputs=16,
-                kernel_size=[1,1],stride=[1,1],padding='VALID', weights_initializer=tf.contrib.layers.xavier_initializer())
-            self.dense_layer = slim.flatten(self.conv2)
+            # self.conv2 = slim.conv2d(activation_fn=tf.nn.relu,
+            #     inputs=self.conv1,num_outputs=16,
+            #     kernel_size=[1,1],stride=[1,1],padding='VALID', weights_initializer=tf.contrib.layers.xavier_initializer())
+            self.dense_layer = slim.flatten(self.h2)
 
             self.tetromino = tf.placeholder(shape=[None, 1],dtype=tf.int32)
             self.tetromino_onehot = tf.reshape(tf.one_hot(self.tetromino,7,dtype=tf.float32), shape=[-1, 7])
 
             self.concat_layer = tf.concat([self.tetromino_onehot, self.dense_layer], 1)
 
-            hidden = slim.fully_connected(self.dense_layer,48,activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer())
+            hidden = tf.contrib.layers.fully_connected(self.dense_layer,32,activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer())
 
             # #Recurrent network for temporal dependencies
             # lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(256,state_is_tuple=True)

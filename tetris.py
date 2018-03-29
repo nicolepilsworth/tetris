@@ -79,12 +79,12 @@ def main():
 
   # Policy gradient variables
   batchSize = 10
-  saveFreq = 20
+  saveFreq = 50
 
   # Universal variables
   nGames = 20000
   tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
-  nRows = 5
+  nRows = 16
   nCols = 10
   maxPerEpisode = 500
   boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
