@@ -59,13 +59,18 @@ class AC_Network():
             # lstm_c, lstm_h = lstm_state
             # self.state_out = (lstm_c[:1, :], lstm_h[:1, :])
             # rnn_out = tf.reshape(lstm_outputs, [-1, 256])
+            self.tetromino = tf.placeholder(shape=[None, 1],dtype=tf.int32)
+            self.tetromino_onehot = tf.reshape(tf.one_hot(self.tetromino,7,dtype=tf.float32), shape=[-1, 7])
+
+            self.concat_layer = tf.concat([self.tetromino_onehot, dense_connected_layer], 1)
+            hidden = tf.contrib.layers.fully_connected(self.concat_layer,64,activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer())
 
             #Output layers for policy and value estimations
-            self.policy = slim.fully_connected(dense_connected_layer,a_size,
+            self.policy = slim.fully_connected(hidden,a_size,
                 activation_fn=tf.nn.softmax,
                 weights_initializer=normalized_columns_initializer(0.01),
                 biases_initializer=None)
-            self.value = slim.fully_connected(dense_connected_layer,1,
+            self.value = slim.fully_connected(hidden,1,
                 activation_fn=None,
                 weights_initializer=normalized_columns_initializer(1.0),
                 biases_initializer=None)

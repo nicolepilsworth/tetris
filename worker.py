@@ -60,6 +60,7 @@ class Worker():
         rewards = rollout[:,2]
         next_observations = rollout[:,3]
         values = rollout[:,5]
+        tetrominos_seen = rollout[:,6]
 
         # Here we take the rewards and values from the rollout, and use them to
         # generate the advantage and discounted returns.
@@ -74,6 +75,7 @@ class Worker():
         # Generate network statistics to periodically save
         feed_dict = {self.local_AC.target_v:discounted_rewards,
             self.local_AC.inputs:np.vstack(observations),
+            self.local_AC.tetromino:np.vstack(tetrominos_seen),
             self.local_AC.actions:actions,
             self.local_AC.advantages:advantages
             # self.local_AC.state_in[0]:self.batch_rnn_state[0],
@@ -91,8 +93,10 @@ class Worker():
     def work(self,max_episode_length,gamma,global_AC,sess,coord,saveFreq):
         episode_count = sess.run(self.global_episodes)
         total_steps = 0
+        actions_list = np.arange(self.a_size)
         print("Starting worker " + str(self.number))
         tetrominos = createTetrominos()
+        n_tetrominos = len(tetrominos) - 1
 
         with sess.as_default(), sess.graph.as_default():
             while not coord.should_stop():
@@ -106,16 +110,16 @@ class Worker():
                 d = False
 
                 self.board.reset()
-                tetromino = util.randChoice(tetrominos)
-                possibleMoves = tetromino.getPossibleMoves(self.board)
+                tetromino_idx = random.randint(0, n_tetrominos)
+                tetromino_AC = np.reshape(tetromino_idx, (1, 1))
+                tetromino = tetrominos[tetromino_idx]
                 done = (len(possibleMoves) == 0)
-                s = util.cnnState(self.board, tetromino.paddedRotations[0])
+                s = util.a3cState(self.board)
                 # rnn_state = self.local_AC.state_init
                 # self.batch_rnn_state = rnn_state
 
                 episode_frames.append(s)
 
-                done = False
                 while True:
                     # tetromino.printShape(0)
                     # self.board.printBoard()
@@ -126,7 +130,8 @@ class Worker():
                     # bool_moves = [(x in possibleMoves) for x in range(self.a_size)]
                     #Take an action using probabilities from policy network output.
                     a_dist,v = sess.run([self.local_AC.policy,self.local_AC.value],
-                        feed_dict={self.local_AC.inputs:[s.flatten()]})
+                        feed_dict={self.local_AC.imageIn:s,
+                                    self.local_AC.tetromino:tetromino_AC})
                         #  self.local_AC.state_in[0]:rnn_state[0],
                         #  self.local_AC.state_in[1]:rnn_state[1]})
 
@@ -147,26 +152,29 @@ class Worker():
                     #   print("err: invalid moves. ending game")
                     else:
                       softmax_a_dist = [valid_moves/sum_v]
-                      a = np.random.choice(softmax_a_dist[0],p=softmax_a_dist[0])
-                      a = np.argmax(softmax_a_dist == a)
+                      a = np.random.choice(actions_list,p=softmax_a_dist[0])
                     # print(softmax_a_dist)
                     # print(a)
                     rot, col = divmod(a, self.board.ncols)
                     # print(rot, col)
                     r = self.board.act(tetromino, col, rot)
 
-                    nextTetromino = util.randChoice(tetrominos)
-                    s1 = util.cnnState(self.board, nextTetromino.paddedRotations[0])
+                    nextTetrominoIdx = random.randint(0, n_tetrominos)
+                    nextTetromino = tetrominos[nextTetrominoIdx]
+                    nextTetromino_AC = np.reshape(nextTetrominoIdx, (1, 1))
+                    s1 = util.a3cState(self.board)
 
                     possibleMoves = nextTetromino.getPossibleMoves(self.board)
                     d = (len(possibleMoves) == 0)
 
                     episode_frames.append(s1)
 
-                    episode_buffer.append([s.flatten(),a,r,s1.flatten(),d,v[0,0]])
+                    episode_buffer.append([s.flatten(),a,r,s1.flatten(),d,v[0,0]], tetromino_AC)
                     episode_values.append(v[0,0])
 
                     tetromino = nextTetromino
+                    tetromino_idx = nextTetrominoIdx
+                    tetromino_AC = nextTetromino_AC
 
                     episode_reward += r
                     s = s1
