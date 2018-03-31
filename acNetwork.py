@@ -28,10 +28,15 @@ class AC_Network():
 
         with tf.variable_scope(scope):
             #Input and visual encoding layers
-            self.inputs = tf.placeholder(shape=[None,s_size[1]*s_size[2]],dtype=tf.float32)
-            self.imageIn = tf.reshape(self.inputs,shape=s_size)
+            self.imageIn = tf.placeholder(shape=s_size,dtype=tf.float32,name="imageIn")
             self.conv1 = tf.layers.conv2d(inputs=self.imageIn, filters=32, kernel_size=[3, 3])
-            # self.conv2 = tf.layers.conv2d(inputs=self.conv1, filters=64, kernel_size=[3, 3])
+            self.pool1 = tf.layers.max_pooling2d(inputs=self.conv1, pool_size=[2, 2], strides=1)
+            self.conv2 = tf.layers.conv2d(inputs=self.pool1, filters=32, kernel_size=[3, 3])
+            self.pool2 = tf.layers.max_pooling2d(inputs=self.conv2, pool_size=[2, 2], strides=1)
+            pool2_flat = tf.reshape(self.pool2, [-1, 4 * 5 * 64])
+            dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+
+            # self.conv3 = tf.layers.conv2d(inputs=self.conv2, filters=64, kernel_size=[3, 3])
             # self.conv1 = tf.nn.conv2d(activation_fn=tf.nn.elu,
             #     inputs=self.imageIn,num_outputs=32,
             #     kernel_size=[3,3],stride=[1,1],padding='VALID')
@@ -40,40 +45,27 @@ class AC_Network():
             #     inputs=self.conv1,num_outputs=32,
             #     kernel_size=[3,3],stride=[1,1],padding='VALID')
             # hidden = slim.fully_connected(slim.flatten(self.conv2),128,activation_fn=tf.nn.elu)
-            flatten_layer = tf.contrib.layers.flatten(self.conv1)
-            dense_connected_layer = tf.contrib.layers.fully_connected(flatten_layer, 48, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
-            # #Recurrent network for temporal dependencies
-            # lstm_cell = tf.nn.rnn_cell.BasicLSTMCell(256,state_is_tuple=True)
-            # c_init = np.zeros((1, lstm_cell.state_size.c), np.float32)
-            # h_init = np.zeros((1, lstm_cell.state_size.h), np.float32)
-            # self.state_init = [c_init, h_init]
-            # c_in = tf.placeholder(tf.float32, [1, lstm_cell.state_size.c],name="state_in0")
-            # h_in = tf.placeholder(tf.float32, [1, lstm_cell.state_size.h],name="state_in1")
-            # self.state_in = (c_in, h_in)
-            # rnn_in = tf.expand_dims(hidden, [0])
-            # step_size = tf.shape(self.imageIn)[:1]
-            # state_in = tf.nn.rnn_cell.LSTMStateTuple(c_in, h_in)
-            # lstm_outputs, lstm_state = tf.nn.dynamic_rnn(
-            #     lstm_cell, rnn_in, initial_state=state_in, sequence_length=step_size,
-            #     time_major=False)
-            # lstm_c, lstm_h = lstm_state
-            # self.state_out = (lstm_c[:1, :], lstm_h[:1, :])
-            # rnn_out = tf.reshape(lstm_outputs, [-1, 256])
+            # flatten_layer = tf.contrib.layers.flatten(self.conv1)
+            # dense_connected_layer = tf.contrib.layers.fully_connected(flatten_layer, 48, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
             self.tetromino = tf.placeholder(shape=[None, 1],dtype=tf.int32)
             self.tetromino_onehot = tf.reshape(tf.one_hot(self.tetromino,7,dtype=tf.float32), shape=[-1, 7])
 
-            self.concat_layer = tf.concat([self.tetromino_onehot, dense_connected_layer], 1)
-            hidden = tf.contrib.layers.fully_connected(self.concat_layer,64,activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer())
+            self.concat_layer = tf.concat([self.tetromino_onehot, dense], 1)
+            hidden = tf.layers.dense(inputs=self.concat_layer,units=64,activation=tf.nn.relu)
+            self.dropout = tf.layers.dropout(
+                inputs=hidden, rate=0.4, training=True)
+            self.policy = tf.layers.dense(inputs=self.dropout, units=a_size, activation=tf.nn.softmax)
+            self.value = tf.layers.dense(inputs=self.dropout, units=1)
 
-            #Output layers for policy and value estimations
-            self.policy = slim.fully_connected(hidden,a_size,
-                activation_fn=tf.nn.softmax,
-                weights_initializer=normalized_columns_initializer(0.01),
-                biases_initializer=None)
-            self.value = slim.fully_connected(hidden,1,
-                activation_fn=None,
-                weights_initializer=normalized_columns_initializer(1.0),
-                biases_initializer=None)
+              #Output layers for policy and value estimations
+            #   self.policy = slim.fully_connected(self.dropout,a_size,
+            #       activation_fn=tf.nn.softmax,
+            #       weights_initializer=normalized_columns_initializer(0.01),
+            #       biases_initializer=None)
+            #   self.value = slim.fully_connected(self.dropout,1,
+            #       activation_fn=None,
+            #       weights_initializer=normalized_columns_initializer(1.0),
+            #       biases_initializer=None)
 
             # self.p = tf.placeholder(tf.bool, [1,a_size])
             # self.invalid_moves = tf.constant(0., shape=[1,a_size])

@@ -11,6 +11,7 @@ import scipy.signal
 import sys
 
 from random import choice
+from random import randint
 from time import time
 from time import sleep
 
@@ -74,7 +75,7 @@ class Worker():
         # Update the global network using gradients from loss
         # Generate network statistics to periodically save
         feed_dict = {self.local_AC.target_v:discounted_rewards,
-            self.local_AC.inputs:np.vstack(observations),
+            self.local_AC.imageIn:np.vstack(observations),
             self.local_AC.tetromino:np.vstack(tetrominos_seen),
             self.local_AC.actions:actions,
             self.local_AC.advantages:advantages
@@ -110,21 +111,18 @@ class Worker():
                 d = False
 
                 self.board.reset()
-                tetromino_idx = random.randint(0, n_tetrominos)
+                tetromino_idx = randint(0, n_tetrominos)
                 tetromino_AC = np.reshape(tetromino_idx, (1, 1))
                 tetromino = tetrominos[tetromino_idx]
-                done = (len(possibleMoves) == 0)
+                possibleMoves = tetromino.getPossibleMoves(self.board)
                 s = util.a3cState(self.board)
                 # rnn_state = self.local_AC.state_init
                 # self.batch_rnn_state = rnn_state
-
                 episode_frames.append(s)
 
                 while True:
                     # tetromino.printShape(0)
                     # self.board.printBoard()
-                    if done:
-                        break
                     # print(possibleMoves)
 
                     # bool_moves = [(x in possibleMoves) for x in range(self.a_size)]
@@ -136,7 +134,7 @@ class Worker():
                         #  self.local_AC.state_in[1]:rnn_state[1]})
 
                     valid_moves = [x if i in possibleMoves else 0. for i, x in enumerate(a_dist[0])]
-
+                    # import pdb; pdb.set_trace()
                     # if episode_count % 100 == 0:
                     #   print(a_dist[0])
                     # print(a_dist[0])
@@ -159,7 +157,7 @@ class Worker():
                     # print(rot, col)
                     r = self.board.act(tetromino, col, rot)
 
-                    nextTetrominoIdx = random.randint(0, n_tetrominos)
+                    nextTetrominoIdx = randint(0, n_tetrominos)
                     nextTetromino = tetrominos[nextTetrominoIdx]
                     nextTetromino_AC = np.reshape(nextTetrominoIdx, (1, 1))
                     s1 = util.a3cState(self.board)
@@ -169,7 +167,7 @@ class Worker():
 
                     episode_frames.append(s1)
 
-                    episode_buffer.append([s.flatten(),a,r,s1.flatten(),d,v[0,0]], tetromino_AC)
+                    episode_buffer.append([s,a,r,s1,d,v[0,0], tetromino_AC])
                     episode_values.append(v[0,0])
 
                     tetromino = nextTetromino
@@ -188,11 +186,14 @@ class Worker():
                         # Since we don't know what the true final return is, we "bootstrap" from our current
                         # value estimation.
                         v1 = sess.run(self.local_AC.value,
-                            feed_dict={self.local_AC.inputs:[s.flatten()]})[0,0]
+                            feed_dict={self.local_AC.imageIn:s,self.local_AC.tetromino:tetromino_AC})[0,0]
                         v_l,p_l,e_l,g_n,v_n  = self.train(global_AC,episode_buffer,sess,gamma,v1)
                         episode_buffer = []
                         sess.run(self.update_local_ops)
-                    if  episode_step_count >= max_episode_length - 1 or d == True:
+                    if  episode_step_count >= max_episode_length - 1:
+                        print("reached max")
+                        break
+                    elif d == True:
                         break
 
                 self.episode_rewards.append(episode_reward)

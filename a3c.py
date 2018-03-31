@@ -30,12 +30,12 @@ def train(nrows, ncols, max_episode_length, saveFreq):
     tetrominos = createTetrominos()
     board = Board(nrows, ncols)
 
-    t = tetrominos[0].paddedRotations[0]
+    # t = tetrominos[0].paddedRotations[0]
 
-    t_rows, t_cols = t.shape[0], t.shape[1]
+    # t_rows, t_cols = t.shape[0], t.shape[1]
     s_size = [
-      -1,
-      board.nrows + t_rows,
+      None,
+      board.nrows,
       board.ncols,
       1
     ]
@@ -45,7 +45,7 @@ def train(nrows, ncols, max_episode_length, saveFreq):
     tf.reset_default_graph()
 
     global_episodes = tf.Variable(0,dtype=tf.int32,name='global_episodes',trainable=False)
-    trainer = tf.train.RMSPropOptimizer(learning_rate=1e-2, decay=0.99, epsilon=0.05)
+    trainer = tf.train.RMSPropOptimizer(learning_rate=1e-3, decay=0.99, epsilon=0.1)
     master_network = AC_Network(s_size,a_size,'global',None) # Generate global network
     # num_workers = 1
     num_workers = multiprocessing.cpu_count() # Set workers ot number of available CPU threads

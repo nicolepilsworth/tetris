@@ -38,6 +38,8 @@ def cnnState(b, tetromino):
 def pgState(b, tetromino):
     return np.append(tetromino.flatten(), b.board.flatten())
 
+def a3cState(b):
+  return np.reshape(b.board, (1, b.nrows, b.ncols, 1))
 
 def epsilonGreedy(q, epsilon, possMoves):
     if random.random() < epsilon:
