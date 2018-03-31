@@ -81,6 +81,8 @@ class Tetromino:
     self.paddedRotations = padRots
     self.rHeights = rHeights
     self.highest = highest
+    self.heights = [len(x) for x in rotations]
+    self.widths = [len(x[0]) for x in rotations]
     # TODO: self.fulls = fulls
 
   def printShape(self, rot):

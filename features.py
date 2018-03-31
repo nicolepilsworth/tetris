@@ -43,14 +43,14 @@ def cumulativeDominance(a, b):
     return np.greater_equal(a_cumulative, b_cumulative).all() and np.greater(a_cumulative, b_cumulative).any()
 
 class Features:
-    def __init__(self, b, pos, nrows, ncols, eroded, l_height):
+    def __init__(self, b, yMax, height,pos, nrows, ncols, eroded, l_height):
         self.b = b
         self.pos = pos
         self.eroded_piece_cells = eroded
         self.landing_height = l_height
         self.nrows = nrows
         self.ncols = ncols
-        self.calcFeatures()
+        self.calcFeatures(yMax, height)
         # self.rows_with_holes = 0
         # self.column_transitions = self.b.ncols
         # self.holes = 0
@@ -80,7 +80,7 @@ class Features:
                     h_depth=self.hole_depth,
                 ))
 
-    def calcFeatures(self):
+    def calcFeatures(self, yMax, height):
 
         # Initialisations (reset of feature values)
         holes = 0
@@ -93,6 +93,7 @@ class Features:
         hole_depth_helper = 0
         cum_well_helper = 0
         row_trans_helper = np.ones(self.nrows)
+        # print(yMax, height)
 
         for col in range(self.ncols):
             cum_well_helper = 0
@@ -103,8 +104,10 @@ class Features:
             # continue up rows in column.
             col_state = False
             has_cell_above = False
-            for row in reversed(range(self.nrows)):
 
+
+            # for row in reversed(range(np.min([yMax + height, self.nrows]))):
+            for row in reversed(range(self.nrows)):
                 if self.b[row][col]: # If any full cell covers empty cell, empty cells are holes
                     has_cell_above = True
                     hole_depth_helper += 1
@@ -134,6 +137,8 @@ class Features:
               row_transitions += 1
 
         rows_with_holes = sum(rows_with_holes)
+        # if (yMax + height) < self.nrows:
+        #     row_transitions += 2*(self.nrows - (yMax + height))
 
         self.f_list = [
             -1 * self.eroded_piece_cells,

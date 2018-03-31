@@ -14,11 +14,12 @@ class Board:
     self.colHeights = np.zeros(self.ncols)
     self.linesCleared = 0
     self.board = np.zeros((self.nrows, self.ncols), dtype=bool)
+    self.yMax = 0
     self.dfBoard = pd.DataFrame(self.board)
 
   def calcColHeights(self):
     self.colHeights = [0 if sum(self.dfBoard[col]) == 0 else self.dfBoard[col][::-1].idxmax() + 1 for col in self.dfBoard]
-
+    self.yMax = np.max(self.colHeights) - 1
   # Print the board in Tetris format
   def printBoard(self):
     print(self.dfBoard[::-1].astype(int).to_string(header=False,index=False))
@@ -119,9 +120,11 @@ class Board:
     for move in valid_moves:
       rot, col = divmod(move, self.ncols)
       b, eroded, l_height = self.act(tetromino, col, rot, True)
-      features = Features(b, move, self.nrows, self.ncols, eroded, l_height)
+      features = Features(b, self.yMax,tetromino.heights[rot], move, self.nrows, self.ncols, eroded, l_height)
     #   features.listFeatures()
+    #   import pdb; pdb.set_trace()
       objects.append(features)
+
 
     # print(list(map(lambda x: x.pos, objects)))
     distinct_moves = distinct(objects)

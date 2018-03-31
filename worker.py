@@ -129,11 +129,11 @@ class Worker():
                     # tetromino.printShape(0)
                     # self.board.printBoard()
 
-                    # best_features = self.board.findBestMoves(possibleMoves, tetromino)
-                    # best_moves = list(map(lambda x: x.pos, best_features))
-                    best_moves = possibleMoves
+                    best_features = self.board.findBestMoves(possibleMoves, tetromino)
+                    best_moves = list(map(lambda x: x.pos, best_features))
+                    # best_moves = possibleMoves
 
-                    # import pdb; pdb.set_trace()
+
                     # print(len(best_moves))
                     valid_moves = [x if i in best_moves else 0. for i, x in enumerate(a_dist[0])]
 
@@ -153,6 +153,7 @@ class Worker():
                     rot, col = divmod(a, self.board.ncols)
                     # print(rot, col)
                     r = self.board.act(tetromino, col, rot, False)
+                    # import pdb; pdb.set_trace()
 
                     nextTetrominoIdx = random.randint(0, n_tetrominos)
                     nextTetromino = tetrominos[nextTetrominoIdx]
@@ -177,14 +178,15 @@ class Worker():
 
                     # # If the episode hasn't ended, but the experience buffer is full, then we
                     # # make an update step using that experience rollout.
-                    if len(episode_buffer) == 30 and d != True:
-                        # Since we don't know what the true final return is, we "bootstrap" from our current
-                        # value estimation.
-                        v1 = sess.run(self.local_AC.value,
-                            feed_dict={self.local_AC.imageIn:s})[0,0]
-                        v_l,p_l,e_l,g_n,v_n, adv = self.train(global_AC,episode_buffer,sess,gamma,v1)
-                        episode_buffer = []
-                        sess.run(self.update_local_ops)
+                    # if len(episode_buffer) == 30 and d != True:
+                    #     # Since we don't know what the true final return is, we "bootstrap" from our current
+                    #     # value estimation.
+                    #     v1 = sess.run(self.local_AC.value,
+                    #         feed_dict={self.local_AC.imageIn:s,
+                    #                 self.local_AC.tetromino:tetromino_AC})[0,0]
+                    #     v_l,p_l,e_l,g_n,v_n, adv = self.train(global_AC,episode_buffer,sess,gamma,v1)
+                    #     episode_buffer = []
+                    #     sess.run(self.update_local_ops)
                     if  episode_step_count >= max_episode_length - 1:
                         print("reached max")
                         break
