@@ -70,14 +70,14 @@ class Features:
                 Row Transitions: {row_trans}
                 Eroded Piece Cells: {erod_cells}
                 Hole Depth: {h_depth}""".format(
-                    rows_w_holes=self.rows_with_holes,
-                    col_trans=self.column_transitions,
-                    holes=self.holes,
-                    l_height=self.landing_height,
-                    cum_wells=self.cum_wells,
-                    row_trans=self.row_transitions,
-                    erod_cells=self.eroded_piece_cells,
-                    h_depth=self.hole_depth,
+                    rows_w_holes=self.f_list[7],
+                    col_trans=self.f_list[6],
+                    holes=self.f_list[5],
+                    l_height=self.f_list[4],
+                    cum_wells=self.f_list[3],
+                    row_trans=self.f_list[2],
+                    erod_cells=self.f_list[0],
+                    h_depth=self.f_list[1],
                 ))
 
     def calcFeatures(self, yMax, height):

@@ -23,7 +23,7 @@ def stop_training(coord):
 
 def train(nrows, ncols, max_episode_length, saveFreq):
     max_episode_length = 10000
-    gamma = .99 # discount rate for advantage estimation and reward discounting
+    gamma = .9 # discount rate for advantage estimation and reward discounting
 
     # Tetris initialisations
     tetrominos = createTetrominos()
@@ -33,21 +33,20 @@ def train(nrows, ncols, max_episode_length, saveFreq):
     # t_rows, t_cols = t.shape[0], t.shape[1]
     s_size = [
       None,
-      board.nrows,
+      4 + len(tetrominos[0].paddedRotations[0]),
       board.ncols,
       1
     ]
-
     a_size=board.ncols*4
 
     tf.reset_default_graph()
 
     global_episodes = tf.Variable(0,dtype=tf.int32,name='global_episodes',trainable=False)
-    trainer = tf.train.RMSPropOptimizer(learning_rate=7e-4, decay=0.99, epsilon=0.1)
-    # trainer = tf.train.AdamOptimizer(learning_rate=7e-4)
+    trainer = tf.train.RMSPropOptimizer(learning_rate=7e-4, decay=0.9, epsilon=0.2)
+    # trainer = tf.train.AdamOptimizer(learning_rate=7e-3)
     master_network = AC_Network(s_size,a_size,'global',None) # Generate global network
-    num_workers = 1
-    # num_workers = multiprocessing.cpu_count() # Set workers ot number of available CPU threads
+    # num_workers = 1
+    num_workers = multiprocessing.cpu_count() # Set workers ot number of available CPU threads
     workers = []
     # Create worker classes
     for i in range(num_workers):

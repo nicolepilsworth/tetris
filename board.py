@@ -13,7 +13,7 @@ class Board:
   def reset(self):
     self.colHeights = np.zeros(self.ncols)
     self.linesCleared = 0
-    self.board = np.zeros((self.nrows, self.ncols), dtype=bool)
+    self.board = np.zeros((self.nrows, self.ncols))
     self.yMax = 0
     self.dfBoard = pd.DataFrame(self.board)
 
@@ -62,6 +62,8 @@ class Board:
   def act(self, tetromino, col, rot, tryMove):
     tShape = tetromino.rotations[rot]
     heights = tetromino.rHeights[rot]
+
+    # The anchor is the first instance of a board cell that stops the Tetromino's fall
     anchorCol, anchorHeight = self.getAnchorColumn(tShape, tetromino.rHeights[rot], col)
 
     # Update board configuration (add new piece)
@@ -121,8 +123,8 @@ class Board:
       rot, col = divmod(move, self.ncols)
       b, eroded, l_height = self.act(tetromino, col, rot, True)
       features = Features(b, self.yMax,tetromino.heights[rot], move, self.nrows, self.ncols, eroded, l_height)
-    #   features.listFeatures()
-    #   import pdb; pdb.set_trace()
+      features.listFeatures()
+      import pdb; pdb.set_trace()
       objects.append(features)
 
 

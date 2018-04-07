@@ -61,7 +61,7 @@ class Worker():
         rewards = rollout[:,2]
         next_observations = rollout[:,3]
         values = rollout[:,5]
-        tetrominos_seen = rollout[:,6]
+        # tetrominos_seen = rollout[:,6]
 
         # Here we take the rewards and values from the rollout, and use them to
         # generate the advantage and discounted returns.
@@ -76,7 +76,6 @@ class Worker():
         # Generate network statistics to periodically save
         feed_dict = {self.local_AC.target_v:discounted_rewards,
             self.local_AC.imageIn:np.vstack(observations),
-            self.local_AC.tetromino:np.vstack(tetrominos_seen),
             self.local_AC.actions:actions,
             self.local_AC.advantages:advantages}
         v_l,p_l,e_l,g_n,v_n,adv, apl_g = sess.run([self.local_AC.value_loss,
@@ -88,6 +87,24 @@ class Worker():
             self.local_AC.apply_grads],
             feed_dict=feed_dict)
         return v_l / len(rollout),p_l / len(rollout),e_l / len(rollout), g_n, v_n, adv/len(rollout)
+
+    def boardTest(self, max_episode_length,gamma,global_AC,sess,coord,saveFreq):
+        actions_list = np.arange(self.a_size)
+        print("Starting worker " + str(self.number))
+        tetrominos = createTetrominos()
+        n_tetrominos = len(tetrominos) - 1
+
+        self.board.reset()
+        tetromino_idx = 0
+        # tetromino_idx = random.randint(0, n_tetrominos)
+        # tetromino_AC = np.reshape(tetromino_idx, (1, 1))
+        tetromino = tetrominos[tetromino_idx]
+        # tetromino.printShape(0)
+        possibleMoves = tetromino.getPossibleMoves(self.board)
+        best_features = self.board.findBestMoves(possibleMoves, tetromino)
+        best_moves = list(map(lambda x: x.pos, best_features))
+        return
+
 
     def work(self,max_episode_length,gamma,global_AC,sess,coord,saveFreq):
         episode_count = sess.run(self.global_episodes)
@@ -108,12 +125,13 @@ class Worker():
                 d = False
 
                 self.board.reset()
-                tetromino_idx = random.randint(0, n_tetrominos)
-                tetromino_AC = np.reshape(tetromino_idx, (1, 1))
+                tetromino_idx = 0
+                # tetromino_idx = random.randint(0, n_tetrominos)
+                # tetromino_AC = np.reshape(tetromino_idx, (1, 1))
                 tetromino = tetrominos[tetromino_idx]
                 # tetromino.printShape(0)
                 possibleMoves = tetromino.getPossibleMoves(self.board)
-                s = util.a3cState(self.board)
+                s = util.a3cState(self.board, tetromino.paddedRotations[0])
 
                 episode_frames.append(s)
 
@@ -123,16 +141,17 @@ class Worker():
 
                     a_dist,v = sess.run([self.local_AC.policy,self.local_AC.value],
                         feed_dict={self.local_AC.imageIn:s,
-                                    self.local_AC.tetromino:tetromino_AC})
+                                    })
                     # if (episode_count % 20 == 0):
                     #     print(a_dist)
                     # tetromino.printShape(0)
                     # self.board.printBoard()
 
-                    best_features = self.board.findBestMoves(possibleMoves, tetromino)
-                    best_moves = list(map(lambda x: x.pos, best_features))
-                    # best_moves = possibleMoves
-
+                    # best_features = self.board.findBestMoves(possibleMoves, tetromino)
+                    # best_moves = list(map(lambda x: x.pos, best_features))
+                    best_moves = possibleMoves
+                    # if episode_count % 100 == 0:
+                    #     import pdb; pdb.set_trace()
 
                     # print(len(best_moves))
                     valid_moves = [x if i in best_moves else 0. for i, x in enumerate(a_dist[0])]
@@ -153,40 +172,41 @@ class Worker():
                     rot, col = divmod(a, self.board.ncols)
                     # print(rot, col)
                     r = self.board.act(tetromino, col, rot, False)
-                    # import pdb; pdb.set_trace()
+
 
                     nextTetrominoIdx = random.randint(0, n_tetrominos)
                     nextTetromino = tetrominos[nextTetrominoIdx]
-                    s1 = util.a3cState(self.board)
+                    s1 = util.a3cState(self.board, nextTetromino.paddedRotations[0])
 
                     possibleMoves = nextTetromino.getPossibleMoves(self.board)
                     d = (len(possibleMoves) == 0)
 
                     episode_frames.append(s1)
 
-                    episode_buffer.append([s,a,r,s1,d,v[0,0],tetromino_AC])
+                    episode_buffer.append([s,a,r,s1,d,v[0,0]])
                     episode_values.append(v[0,0])
 
                     tetromino = nextTetromino
                     tetromino_idx = nextTetrominoIdx
-                    tetromino_AC = np.reshape(tetromino_idx, (1, 1))
+                    # tetromino_AC = np.reshape(tetromino_idx, (1, 1))
 
                     episode_reward += r
                     s = s1
                     total_steps += 1
                     episode_step_count += 1
 
-                    # # If the episode hasn't ended, but the experience buffer is full, then we
-                    # # make an update step using that experience rollout.
-                    # if len(episode_buffer) == 30 and d != True:
-                    #     # Since we don't know what the true final return is, we "bootstrap" from our current
-                    #     # value estimation.
-                    #     v1 = sess.run(self.local_AC.value,
-                    #         feed_dict={self.local_AC.imageIn:s,
-                    #                 self.local_AC.tetromino:tetromino_AC})[0,0]
-                    #     v_l,p_l,e_l,g_n,v_n, adv = self.train(global_AC,episode_buffer,sess,gamma,v1)
-                    #     episode_buffer = []
-                    #     sess.run(self.update_local_ops)
+                    # If the episode hasn't ended, but the experience buffer is full, then we
+                    # make an update step using that experience rollout.
+                    if len(episode_buffer) == 30 and d != True:
+                        # Since we don't know what the true final return is, we "bootstrap" from our current
+                        # value estimation.
+                        v1 = sess.run(self.local_AC.value,
+                            feed_dict={self.local_AC.imageIn:s
+                                    })[0,0]
+                        # print("estimate:", v1)
+                        v_l,p_l,e_l,g_n,v_n, adv = self.train(global_AC,episode_buffer,sess,gamma,v1)
+                        episode_buffer = []
+                        sess.run(self.update_local_ops)
                     if  episode_step_count >= max_episode_length - 1:
                         print("reached max")
                         break

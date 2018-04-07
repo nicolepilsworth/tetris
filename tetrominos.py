@@ -13,20 +13,20 @@ def createTetrominos():
        [True, False]],
 
        [[True], [True], [True], [True]],
-
-       [[False, True, False],
-       [True, True, True]],
     #
-       [[True, True],
-       [False, True],
-       [False, True]],
-
-       [[True, True, False],
-       [False, True, True]],
-       #
-       [[False, True, True],
-       [True, True, False]],
-       #
+    #    [[False, True, False],
+    #    [True, True, True]],
+    # #
+    #    [[True, True],
+    #    [False, True],
+    #    [False, True]],
+    #
+    #    [[True, True, False],
+    #    [False, True, True]],
+    #    #
+    #    [[False, True, True],
+    #    [True, True, False]],
+    #    #
        [[True, True],
        [True, True]]
     ]]
@@ -83,21 +83,16 @@ class Tetromino:
     self.highest = highest
     self.heights = [len(x) for x in rotations]
     self.widths = [len(x[0]) for x in rotations]
-    # TODO: self.fulls = fulls
 
   def printShape(self, rot):
     print(''.join(map(lambda x: ' '.join(map(str, x)) + "\n", self.rotations[rot][::-1].astype(int))))
     print("\n")
     return
 
-  # TODO: store possible moves historically by
   # Iterate through every rotation and column to get all possible actions
   def getPossibleMoves(self, board):
     moves = []
-    for idx, rot in enumerate(self.rotations):
-      for col in range(board.board.shape[1] - rot.shape[1] + 1):
-        if board.tetrominoFitsInCol(col, rot, self.rHeights[idx]):
-        #   moves.append([col, idx])
-          moves.append((idx * board.ncols) + col)
-
-    return moves
+    return [(idx * board.ncols) + col
+        for idx, rot in enumerate(self.rotations)
+        for col in range(board.board.shape[1] - rot.shape[1] + 1)
+        if board.tetrominoFitsInCol(col, rot, self.rHeights[idx])]
