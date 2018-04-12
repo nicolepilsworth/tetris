@@ -42,7 +42,7 @@ def train(nrows, ncols, max_episode_length, saveFreq):
     tf.reset_default_graph()
 
     global_episodes = tf.Variable(0,dtype=tf.int32,name='global_episodes',trainable=False)
-    trainer = tf.train.RMSPropOptimizer(learning_rate=7e-4, decay=0.9, epsilon=0.2)
+    trainer = tf.train.RMSPropOptimizer(learning_rate=7e-4, decay=0.85, epsilon=0.1)
     # trainer = tf.train.AdamOptimizer(learning_rate=7e-3)
     master_network = AC_Network(s_size,a_size,'global',None) # Generate global network
     # num_workers = 1
@@ -61,18 +61,12 @@ def train(nrows, ncols, max_episode_length, saveFreq):
         sess.run(tf.global_variables_initializer())
 
         # This is where the asynchronous magic happens.
-        # Start the "work" process for each worker in a separate threat.
+        # Start the "work" process for each worker in a separate thread.
         worker_threads = []
         for worker in workers:
             worker_work = lambda: worker.work(max_episode_length,gamma,master_network,sess,coord,saveFreq)
             t = threading.Thread(target=(worker_work))
             t.start()
+            sleep(0.5)
             worker_threads.append(t)
-        gs = 0
-        while not coord.should_stop():
-            s = time()
-            sleep(10)
-            gs1 = sess.run(global_episodes)
-            # print("Episodes", gs1, 'one for ', (time()-s)/(gs1-gs))
-            gs = gs1
         coord.join(worker_threads)

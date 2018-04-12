@@ -51,14 +51,6 @@ class Features:
         self.nrows = nrows
         self.ncols = ncols
         self.calcFeatures(yMax, height)
-        # self.rows_with_holes = 0
-        # self.column_transitions = self.b.ncols
-        # self.holes = 0
-        # self.landing_height = 0
-        # self.cum_wells = 0
-        # self.row_transitions = 2*self.b.nrows
-        # self.eroded_piece_cells = 0
-        # self.hole_depth = 0
 
     def listFeatures(self):
         print(  """Board Features:

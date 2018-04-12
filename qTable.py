@@ -50,7 +50,7 @@ def learn(epsilon, gamma, alpha, nGames, isRand, getAvgs):
           if s1 not in Q:
             Q[s1] = np.zeros((board.ncols, len(nextTetromino.rotations)))
 
-          # Q-learning value function update
+          # Q-value function update
           Q[s][col][rot] = Q[s][col][rot] + alpha*(r + gamma*np.amax(Q[s1]) - Q[s][col][rot])
 
       tetromino = nextTetromino

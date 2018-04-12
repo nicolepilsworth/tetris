@@ -125,8 +125,8 @@ class Worker():
                 d = False
 
                 self.board.reset()
-                tetromino_idx = 0
-                # tetromino_idx = random.randint(0, n_tetrominos)
+                # tetromino_idx = 0
+                tetromino_idx = random.randint(0, n_tetrominos)
                 # tetromino_AC = np.reshape(tetromino_idx, (1, 1))
                 tetromino = tetrominos[tetromino_idx]
                 # tetromino.printShape(0)
@@ -180,6 +180,8 @@ class Worker():
 
                     possibleMoves = nextTetromino.getPossibleMoves(self.board)
                     d = (len(possibleMoves) == 0)
+                    # if d == True:
+                    #   r = -1
 
                     episode_frames.append(s1)
 
@@ -189,6 +191,7 @@ class Worker():
                     tetromino = nextTetromino
                     tetromino_idx = nextTetrominoIdx
                     # tetromino_AC = np.reshape(tetromino_idx, (1, 1))
+
 
                     episode_reward += r
                     s = s1

@@ -124,7 +124,6 @@ class Board:
       b, eroded, l_height = self.act(tetromino, col, rot, True)
       features = Features(b, self.yMax,tetromino.heights[rot], move, self.nrows, self.ncols, eroded, l_height)
       features.listFeatures()
-      import pdb; pdb.set_trace()
       objects.append(features)
 
 

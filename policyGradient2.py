@@ -131,10 +131,7 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
                     for idx,grad in enumerate(grads):
                         gradBuffer[idx] += grad
 
-
-                    # print(i, i % update_frequency)
                     if i % update_frequency == 0 and i != 0:
-                        # print("Updating network at episode ", i)
                         feed_dict= dictionary = dict(zip(myAgent.gradient_holders, gradBuffer))
                         _ = sess.run(myAgent.update_batch, feed_dict=feed_dict)
                         for ix,grad in enumerate(gradBuffer):

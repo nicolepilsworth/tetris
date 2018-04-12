@@ -59,6 +59,10 @@ def a3cState(b, tetromino):
     (1, 4 + tetromino.shape[0], b.ncols, 1)
     )
 
+def a3cBoardState(b):
+    boardInput = b.board[0:4] if b.yMax < 4 else b.board[b.yMax - 4:b.yMax]
+    return np.reshape(boardInput, (1, 4, b.ncols, 1))
+
 def epsilonGreedy(q, epsilon, possMoves):
     if random.random() < epsilon:
         return randChoice(possMoves)
