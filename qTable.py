@@ -4,15 +4,45 @@ from board import Board
 from graph import Graph
 import util
 
-def learn(epsilon, gamma, alpha, nGames, isRand, getAvgs):
-  Q = {}
+def playByPolicy(Q, maxPerEpisode, nRows, nCols):
   tetrominos = createTetrominos()
-  board = Board(5, 3)
-  # board.printBoard()
+  board = Board(nRows, nCols)
   totalLinesCleared = 0
   col = 0
   rot = 0
+
+  for j in range(maxPerEpisode):
+    tetromino = util.randChoice(tetrominos)
+
+    # Moves come in the format [columnIndex, rotationIndex]
+    possibleMoves = tetromino.getPossibleMoves(board)
+
+    # Game over condition
+    if len(possibleMoves) == 0:
+        return board.linesCleared
+
+    s = util.strState(board.board, tetromino.shape)
+    # Check if Q(s, :) exists, use policy if it does
+    if s in Q:
+      [rot, col] = divmod(util.epsilonGreedy(Q[s], -1, possibleMoves, board.ncols), board.ncols)
+    else:
+      [rot, col] = divmod(util.randChoice(possibleMoves), board.ncols)
+
+    # Perform action and collect reward
+    r = board.act(tetromino, col, rot)
+
+  return board.linesCleared
+
+def learn(epsilon, gamma, alpha, nGames, isRand, getAvgs, nRows, nCols):
   avgs = []
+  gameScores = []
+
+  Q = {}
+  tetrominos = createTetrominos()
+  board = Board(nRows, nCols)
+  totalLinesCleared = 0
+  col = 0
+  rot = 0
   for i in range(nGames):
     board.reset()
     tetromino = util.randChoice(tetrominos)
@@ -20,10 +50,14 @@ def learn(epsilon, gamma, alpha, nGames, isRand, getAvgs):
     while(True):
       # Moves come in the format [columnIndex, rotationIndex]
       possibleMoves = tetromino.getPossibleMoves(board)
+    #   tetromino.printShape(0)
+    #   board.printBoard()
 
       # Game over condition
       if len(possibleMoves) == 0:
           break
+
+    #   import pdb; pdb.set_trace()
 
       if isRand:
         [rot, col] = divmod(util.randChoice(possibleMoves), board.ncols)
@@ -34,8 +68,9 @@ def learn(epsilon, gamma, alpha, nGames, isRand, getAvgs):
         if s not in Q:
           Q[s] = np.zeros((board.ncols, len(tetromino.rotations)))
           [rot, col] = divmod(util.randChoice(possibleMoves), board.ncols)
+
         else:
-          [rot, col] = divmod(util.epsilonGreedy(Q[s], epsilon, possibleMoves), board.ncols)
+          [rot, col] = divmod(util.epsilonGreedy(Q[s], epsilon, possibleMoves, board.ncols), board.ncols)
 
       # Perform action and collect reward
       r = board.act(tetromino, col, rot)
@@ -55,16 +90,20 @@ def learn(epsilon, gamma, alpha, nGames, isRand, getAvgs):
 
       tetromino = nextTetromino
 
-    totalLinesCleared += board.linesCleared
+    # totalLinesCleared += board.linesCleared
+    # print(board.linesCleared)
 
-    if (i+1)%10 == 0:
-      avgs.append(totalLinesCleared/(i+1))
+    # Play 10 games every 100 games to measure learning performance
+    if (i)%20 == 0 and i != 0:
+      print(i)
+      for j in range(10):
+        gameScores.append(playByPolicy(Q, 200, nRows, nCols))
+    #   print(totalLinesCleared/50)
+    #   avgs.append(totalLinesCleared/50)
+    #   totalLinesCleared = 0
+      avgs.append(np.mean(gameScores))
+      gameScores = []
 
     # print("Lines cleared: ", board.linesCleared)
-  avg = totalLinesCleared/nGames
-  avgs.append(avg)
   # print("Average lines cleared:", avg)
-  if getAvgs:
-    return avgs
-  else:
-    return Q
+  return avgs
