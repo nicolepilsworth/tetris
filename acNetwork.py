@@ -29,9 +29,9 @@ class AC_Network():
         with tf.variable_scope(scope):
             #Input and visual encoding layers
             self.imageIn = tf.placeholder(shape=s_size,dtype=tf.float32,name="imageIn")
-            self.conv1 = tf.layers.conv2d(inputs=self.imageIn, filters=16, kernel_size=[2, 2])
-            self.conv2 = tf.layers.conv2d(inputs=self.conv1, filters=32, kernel_size=[2, 2])
-            self.conv3 = tf.layers.conv2d(inputs=self.conv2, filters=64, kernel_size=[1, 1])
+            self.conv1 = tf.layers.conv2d(inputs=self.imageIn, filters=16, kernel_size=[3, 3], padding="same")
+            self.conv2 = tf.layers.conv2d(inputs=self.conv1, filters=32, kernel_size=[3, 3], padding="same")
+            self.conv3 = tf.layers.conv2d(inputs=self.conv2, filters=64, kernel_size=[3, 3], padding="same")
             # hidden1 = tf.contrib.layers.fully_connected(self.conv2, 32, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
             # hidden2 = tf.contrib.layers.fully_connected(hidden1, 32, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
             # self.pool1 = tf.layers.max_pooling2d(inputs=self.conv1, pool_size=[2, 2], strides=1)
@@ -55,16 +55,15 @@ class AC_Network():
             # dense_connected2 = tf.contrib.layers.fully_connected(dense_connected_layer, 48, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
             self.tetromino = tf.placeholder(shape=[None, 1],dtype=tf.int32)
             self.tetromino_onehot = tf.reshape(tf.one_hot(self.tetromino,7,dtype=tf.float32), shape=[-1, 7])
-            self.tetromino_hidden = slim.fully_connected(self.tetromino_onehot,40,activation_fn=tf.nn.relu)
 
-            self.concat_layer = tf.reshape(tf.concat([self.tetromino_hidden, hidden], 0), shape=[-1, 80])
+            self.concat_layer = tf.concat([self.tetromino_onehot, hidden], 1)
             # hidden = tf.layers.dense(inputs=flatten_layer,units=32,activation=tf.nn.relu)
-            hidden2 = tf.layers.dense(inputs=self.concat_layer,units=64,activation=tf.nn.relu)
-            hidden3 = slim.fully_connected(slim.flatten(hidden2),128,activation_fn=tf.nn.relu)
-            # self.dropout = tf.layers.dropout(
-            #     inputs=hidden2, rate=0.4, training=True)
-            self.policy = tf.layers.dense(inputs=hidden3, units=a_size, activation=tf.nn.softmax)
-            self.value = tf.layers.dense(inputs=hidden3, units=1)
+            hidden2 = slim.fully_connected(self.concat_layer,64,activation_fn=tf.nn.relu)
+            hidden3 = slim.fully_connected(hidden2,128,activation_fn=tf.nn.relu)
+            self.dropout = tf.layers.dropout(
+                inputs=hidden3, rate=0.4, training=True)
+            self.policy = tf.layers.dense(inputs=self.dropout, units=a_size, activation=tf.nn.softmax)
+            self.value = tf.layers.dense(inputs=self.dropout, units=1)
 
             # self.p = tf.placeholder(tf.bool, [1,a_size])
             # self.invalid_moves = tf.constant(0., shape=[1,a_size])
