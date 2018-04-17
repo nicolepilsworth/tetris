@@ -33,7 +33,7 @@ def train(nrows, ncols, max_episode_length, saveFreq):
     # t_rows, t_cols = t.shape[0], t.shape[1]
     s_size = [
       None,
-      4 + len(tetrominos[0].paddedRotations[0]),
+      4,
       board.ncols,
       1
     ]

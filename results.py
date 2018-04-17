@@ -1,7 +1,7 @@
 import pprint
 import numpy as np
 import random
-import gevent
+import gevent.monkey
 
 from tetrominos import Tetromino, createTetrominos
 from board import Board
@@ -32,7 +32,7 @@ def run50QTable(nRows, nCols):
     saveFreq = 50
 
     # Universal variables
-    nGames = 200
+    nGames = 600
     tSteps = [10*i for i in range(1, int(nGames/10 + 1))]
     # nRows = 16
     # nCols = 10
@@ -59,9 +59,9 @@ def run50QTable(nRows, nCols):
 
     allAvgs = []
 
-    jobs = [gevent.spawn(np.array(funcs[learnType], *args[learnType])) for i in range(5)]
-    gevent.wait(jobs)
-
+    threads = [gevent.spawn(funcs[learnType], *args[learnType]) for i in range(20)]
+    avgs = gevent.joinall(threads)
+    print(np.mean([thread.value for thread in threads], axis=0))
 
     # for i in range(5):
     #     avgs = np.array(funcs[learnType](*args[learnType]))

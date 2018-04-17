@@ -63,11 +63,13 @@ def a3cBoardState(b):
     boardInput = b.board[0:4] if b.yMax < 4 else b.board[b.yMax - 4:b.yMax]
     return np.reshape(boardInput, (1, 4, b.ncols, 1))
 
-def epsilonGreedy(q, epsilon, possMoves):
+def epsilonGreedy(q, epsilon, possMoves, nCols):
     if random.random() < epsilon:
         return randChoice(possMoves)
     else:
         qPossMoves = []
         for p in possMoves:
-            qPossMoves.append(q[p[0]][p[1]])
-        return possMoves[np.argmax(qPossMoves)]
+            [rot, col] = divmod(p, nCols)
+            qPossMoves.append(q[col][rot])
+        highest = np.argwhere(qPossMoves == np.amax(qPossMoves))
+        return possMoves[randChoice(highest.flatten().tolist())]

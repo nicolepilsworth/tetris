@@ -59,7 +59,7 @@ class Board:
       self.board[coor_x:end_x, coor_y:end_y] = self.board[coor_x:end_x, coor_y:end_y] + tShape
       return
 
-  def act(self, tetromino, col, rot, tryMove):
+  def act(self, tetromino, col, rot, tryMove=False):
     tShape = tetromino.rotations[rot]
     heights = tetromino.rHeights[rot]
 

@@ -61,7 +61,7 @@ class Worker():
         rewards = rollout[:,2]
         next_observations = rollout[:,3]
         values = rollout[:,5]
-        # tetrominos_seen = rollout[:,6]
+        tetrominos_seen = rollout[:,6]
 
         # Here we take the rewards and values from the rollout, and use them to
         # generate the advantage and discounted returns.
@@ -76,6 +76,7 @@ class Worker():
         # Generate network statistics to periodically save
         feed_dict = {self.local_AC.target_v:discounted_rewards,
             self.local_AC.imageIn:np.vstack(observations),
+            self.local_AC.tetromino:np.vstack(tetrominos_seen),
             self.local_AC.actions:actions,
             self.local_AC.advantages:advantages}
         v_l,p_l,e_l,g_n,v_n,adv, apl_g = sess.run([self.local_AC.value_loss,
@@ -127,11 +128,11 @@ class Worker():
                 self.board.reset()
                 # tetromino_idx = 0
                 tetromino_idx = random.randint(0, n_tetrominos)
-                # tetromino_AC = np.reshape(tetromino_idx, (1, 1))
+                tetromino_AC = np.reshape(tetromino_idx, (1, 1))
                 tetromino = tetrominos[tetromino_idx]
                 # tetromino.printShape(0)
                 possibleMoves = tetromino.getPossibleMoves(self.board)
-                s = util.a3cState(self.board, tetromino.paddedRotations[0])
+                s = util.a3cBoardState(self.board)
 
                 episode_frames.append(s)
 
@@ -139,9 +140,10 @@ class Worker():
                     # bool_moves = [(x in possibleMoves) for x in range(self.a_size)]
                     #Take an action using probabilities from policy network output.
 
-                    a_dist,v = sess.run([self.local_AC.policy,self.local_AC.value],
-                        feed_dict={self.local_AC.imageIn:s,
+                    a_dist,v,c = sess.run([self.local_AC.policy,self.local_AC.value,self.local_AC.tetromino_onehot],
+                        feed_dict={self.local_AC.imageIn:s, self.local_AC.tetromino:tetromino_AC
                                     })
+                    # print(c)
                     # if (episode_count % 20 == 0):
                     #     print(a_dist)
                     # tetromino.printShape(0)
@@ -171,12 +173,12 @@ class Worker():
                     # print(a)
                     rot, col = divmod(a, self.board.ncols)
                     # print(rot, col)
-                    r = self.board.act(tetromino, col, rot, False)
+                    r = self.board.act(tetromino, col, rot)
 
 
                     nextTetrominoIdx = random.randint(0, n_tetrominos)
                     nextTetromino = tetrominos[nextTetrominoIdx]
-                    s1 = util.a3cState(self.board, nextTetromino.paddedRotations[0])
+                    s1 = util.a3cBoardState(self.board)
 
                     possibleMoves = nextTetromino.getPossibleMoves(self.board)
                     d = (len(possibleMoves) == 0)
@@ -185,13 +187,12 @@ class Worker():
 
                     episode_frames.append(s1)
 
-                    episode_buffer.append([s,a,r,s1,d,v[0,0]])
+                    episode_buffer.append([s,a,r,s1,d,v[0,0],tetromino_AC])
                     episode_values.append(v[0,0])
 
                     tetromino = nextTetromino
                     tetromino_idx = nextTetrominoIdx
-                    # tetromino_AC = np.reshape(tetromino_idx, (1, 1))
-
+                    tetromino_AC = np.reshape(tetromino_idx, (1, 1))
 
                     episode_reward += r
                     s = s1
@@ -204,7 +205,8 @@ class Worker():
                         # Since we don't know what the true final return is, we "bootstrap" from our current
                         # value estimation.
                         v1 = sess.run(self.local_AC.value,
-                            feed_dict={self.local_AC.imageIn:s
+                            feed_dict={self.local_AC.imageIn:s,
+                                      self.local_AC.tetromino:tetromino_AC
                                     })[0,0]
                         # print("estimate:", v1)
                         v_l,p_l,e_l,g_n,v_n, adv = self.train(global_AC,episode_buffer,sess,gamma,v1)

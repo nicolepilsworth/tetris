@@ -12,6 +12,7 @@ from qNetwork import learn as qNetworkLearn
 from cnn import learn as cnnLearn
 from policyGradient2 import learn as pgLearn
 from a3c import train as a3cTrain
+from results import run50QTable
 
 def playByPolicy(Q, maxPerEpisode):
   tetrominos = createTetrominos()
@@ -68,6 +69,8 @@ def learn(nGames, nRows, nCols, maxPerEpisode, batchSize):
 
 def main():
 
+  # run50QTable(5, 3)
+  # return
   # Choose from "qTable", "qNetwork", "cnn", "policyGradient"
   learnType = "a3c"
 
@@ -82,10 +85,10 @@ def main():
   saveFreq = 50
 
   # Universal variables
-  nGames = 20000
+  nGames = 200
   tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
   nRows = 16
-  nCols = 10
+  nCols = 6
   maxPerEpisode = 500
   boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
 
@@ -111,7 +114,7 @@ def main():
 
   # Arguments to pass into learn function
   args = {
-    "qTable": (epsilon, gamma, alpha, nGames, True, True),
+    "qTable": (epsilon, gamma, alpha, nGames, False, True),
     "qNetwork": (epsilon, gamma, alpha, nGames, True),
     "cnn": (epsilon, gamma, alpha, nGames, nRows, nCols),
     "policyGradient": (nRows, nCols, maxPerEpisode, batchSize, nGames),
