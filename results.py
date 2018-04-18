@@ -1,11 +1,12 @@
 import pprint
 import numpy as np
 import random
-import gevent.monkey
+import plotly.plotly as py
+from plotly.graph_objs import *
 
 from tetrominos import Tetromino, createTetrominos
 from board import Board
-from graph import Graph
+from resultsGraph import Graph
 from pgGraph import PgGraph
 from compareGraph import CompareGraph
 import util
@@ -16,7 +17,6 @@ from policyGradient2 import learn as pgLearn
 from a3c import train as a3cTrain
 
 def run50QTable(nRows, nCols):
-    gevent.monkey.patch_all()
 
     # Choose from "qTable", "qNetwork", "cnn", "policyGradient", "a3c"
     learnType = "qTable"
@@ -32,7 +32,7 @@ def run50QTable(nRows, nCols):
     saveFreq = 50
 
     # Universal variables
-    nGames = 600
+    nGames = 300
     tSteps = [10*i for i in range(1, int(nGames/10 + 1))]
     # nRows = 16
     # nCols = 10
@@ -59,11 +59,48 @@ def run50QTable(nRows, nCols):
 
     allAvgs = []
 
-    threads = [gevent.spawn(funcs[learnType], *args[learnType]) for i in range(20)]
-    avgs = gevent.joinall(threads)
-    print(np.mean([thread.value for thread in threads], axis=0))
+    # threads = [gevent.spawn(funcs[learnType], *args[learnType]) for i in range(20)]
+    # avgs = gevent.joinall(threads)
+    # print(np.mean([thread.value for thread in threads], axis=0))
 
-    # for i in range(5):
-    #     avgs = np.array(funcs[learnType](*args[learnType]))
-    #     allAvgs.append(avgs)
-    # print(np.mean(allAvgs, axis=0))
+    epsilons = [0.01, 0.1, 0.3, 0.5]
+    colours = ["0,100,80", "0,176,246", "231,107,243", "219,883,83"]
+    # epsilons = [0.3]
+    graph_lines = []
+    t_steps = np.arange(0, nGames + 20, 20)
+    t_steps_rev = t_steps[::-1]
+    graph_lines = []
+    x_title = "Number of episodes"
+    y_title = "Average score"
+    agents = 5
+
+    for idx, e in enumerate(epsilons):
+        qTableArgs = (e, gamma, alpha, nGames, False, True, nRows, nCols)
+        for i in range(agents):
+            print(i)
+            avgs = np.array(funcs[learnType](*qTableArgs))
+            allAvgs.append(avgs)
+        mean = np.mean(allAvgs, axis=0)
+        std_dev = np.std(allAvgs, axis=0)
+        y_upper = np.add(mean, std_dev)
+        y_lower = np.subtract(mean, std_dev)
+        y_lower = y_lower[::-1]
+
+        graph_lines.extend(({
+                "x": np.concatenate([t_steps, t_steps_rev]),
+                "y": np.concatenate([y_upper, y_lower]),
+                "fill":'tozerox',
+                "fillcolor":'rgba({},0.2)'.format(colours[idx]),
+                "line":Line(color='transparent'),
+                "showlegend":False,
+                "name":'epsilon = ' + str(e)
+            },
+            {   "x":t_steps,
+                "y":mean,
+                "line":Line(color="rgb({})".format(colours[idx])),
+                "mode":'lines',
+                "name":'epsilon = ' + str(e)
+            }
+        ))
+    graph = Graph(t_steps, graph_lines, x_title, y_title)
+    graph.plot()
