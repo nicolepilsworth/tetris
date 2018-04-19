@@ -72,7 +72,7 @@ def main():
   run50QTable(5, 3)
   return
   # Choose from "qTable", "qNetwork", "cnn", "policyGradient"
-  learnType = "a3c"
+  learnType = "policyGradient"
 
   # Q-learning variables
   epsilon = 0.08 # For epsilon-greedy action choice
