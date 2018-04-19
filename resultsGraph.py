@@ -21,7 +21,8 @@ class Graph:
                     size=18,
                     color='#7f7f7f'
                 )
-            )
+            ),
+            font=dict(size=18)
         )
 
     def plot(self):

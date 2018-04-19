@@ -23,7 +23,7 @@ def run50QTable(nRows, nCols):
 
     # Q-learning variables
     epsilon = 0.1 # For epsilon-greedy action choice
-    gamma = 0.7 # Discount factor
+    gamma = 0.8 # Discount factor
     alpha = 0.3 # Value fnction learning rate
     rand = False # Whether to choose actions randomly of use Q-learning
 
@@ -32,7 +32,7 @@ def run50QTable(nRows, nCols):
     saveFreq = 50
 
     # Universal variables
-    nGames = 300
+    nGames = 100
     tSteps = [10*i for i in range(1, int(nGames/10 + 1))]
     # nRows = 16
     # nCols = 10
@@ -63,21 +63,21 @@ def run50QTable(nRows, nCols):
     # avgs = gevent.joinall(threads)
     # print(np.mean([thread.value for thread in threads], axis=0))
 
-    epsilons = [0.01, 0.1, 0.3, 0.5]
-    colours = ["0,100,80", "0,176,246", "231,107,243", "219,883,83"]
-    # epsilons = [0.3]
+    # epsilons = [0.01, 0.1, 0.3, 0.5]
+    colours = ["0,76,153", "178,102,255", "0,153,76", "204,0,0"]
+    epsilons = [0.1]
     graph_lines = []
     t_steps = np.arange(0, nGames + 20, 20)
     t_steps_rev = t_steps[::-1]
     graph_lines = []
     x_title = "Number of episodes"
     y_title = "Average score"
-    agents = 5
+    agents = 1
 
     for idx, e in enumerate(epsilons):
+        allAvgs = []
         qTableArgs = (e, gamma, alpha, nGames, False, True, nRows, nCols)
         for i in range(agents):
-            print(i)
             avgs = np.array(funcs[learnType](*qTableArgs))
             allAvgs.append(avgs)
         mean = np.mean(allAvgs, axis=0)

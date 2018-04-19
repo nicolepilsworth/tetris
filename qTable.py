@@ -93,8 +93,8 @@ def learn(epsilon, gamma, alpha, nGames, isRand, getAvgs, nRows, nCols):
     # totalLinesCleared += board.linesCleared
     # print(board.linesCleared)
 
-    # Play 10 games every 100 games to measure learning performance
-    if (i)%20 == 0 and i != 0:
+    # Play 10 games every 50 games to measure learning performance
+    if (i+1)%20 == 0 or i == 0:
       print(i)
       for j in range(10):
         gameScores.append(playByPolicy(Q, 200, nRows, nCols))

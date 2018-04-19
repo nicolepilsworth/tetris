@@ -69,8 +69,8 @@ def learn(nGames, nRows, nCols, maxPerEpisode, batchSize):
 
 def main():
 
-  # run50QTable(5, 3)
-  # return
+  run50QTable(5, 3)
+  return
   # Choose from "qTable", "qNetwork", "cnn", "policyGradient"
   learnType = "a3c"
 
@@ -88,7 +88,7 @@ def main():
   nGames = 200
   tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
   nRows = 16
-  nCols = 6
+  nCols = 10
   maxPerEpisode = 500
   boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
 
