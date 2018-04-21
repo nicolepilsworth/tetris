@@ -19,7 +19,7 @@ from a3c import train as a3cTrain
 def run50QTable(nRows, nCols):
 
     # Choose from "qTable", "qNetwork", "cnn", "policyGradient", "a3c"
-    learnType = "qNetwork"
+    learnType = "qTable"
 
     # Q-learning variables
     epsilon = 0.1 # For epsilon-greedy action choice
@@ -32,7 +32,7 @@ def run50QTable(nRows, nCols):
     saveFreq = 50
 
     # Universal variables
-    nGames = 300
+    nGames = 500
     tSteps = [10*i for i in range(1, int(nGames/10 + 1))]
     # nRows = 16
     # nCols = 10
@@ -76,8 +76,12 @@ def run50QTable(nRows, nCols):
 
     for idx, e in enumerate(epsilons):
         allAvgs = []
-        # algArgs = (e, gamma, alpha, nGames, False, True, nRows, nCols)
-        algArgs = (e, gamma, alpha, nGames, True, nRows, nCols)
+        # QTABLE:
+        algArgs = (e, gamma, alpha, nGames, False, True, nRows, nCols)
+        # QNETWORK:
+        # algArgs = (e, gamma, alpha, nGames, True, nRows, nCols)
+        # POLICYGRADIENT:
+
         for i in range(agents):
             avgs = np.array(funcs[learnType](*algArgs))
             allAvgs.append(avgs)
