@@ -27,25 +27,33 @@ def discount_rewards(r):
 class agent():
     def __init__(self, lr, s_size,a_size,h_size):
         #These lines established the feed-forward part of the network. The agent takes a state and produces an action.
-        self.state_in= tf.placeholder(shape=s_size,dtype=tf.float32)
-        conv1 = tf.layers.conv2d(inputs=self.state_in, filters=24, kernel_size=[1, 1])
-        conv2 = tf.layers.conv2d(inputs=conv1, filters=24, kernel_size=[3, 3])
+        with tf.name_scope("input"):
+            self.state_in= tf.placeholder(shape=s_size,dtype=tf.float32, name="state_in")
+        # with tf.name_scope("conv_layers"):
+            # conv1 = tf.layers.conv2d(inputs=self.state_in, filters=24, kernel_size=[3, 3], name="conv1")
+            # conv2 = tf.layers.conv2d(inputs=conv1, filters=48, kernel_size=[3, 3], name="conv2")
         # conv3 = tf.layers.conv2d(inputs=conv2, filters=8, kernel_size=[1, 1])
-        flatten_layer = tf.contrib.layers.flatten(conv2)
-        dense_connected_layer = tf.contrib.layers.fully_connected(flatten_layer, 64, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
-        self.output = tf.contrib.layers.fully_connected(dense_connected_layer, a_size, activation_fn=tf.nn.softmax, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
+        with tf.name_scope("fully_connected"):
+            # flatten_layer = tf.contrib.layers.flatten(conv2)
+            # dense_connected_layer = tf.contrib.layers.fully_connected(flatten_layer, 64, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
+            hidden = slim.fully_connected(self.state_in,h_size,biases_initializer=None,activation_fn=tf.nn.relu)
+            # hidden2 = slim.fully_connected(hidden,32,biases_initializer=None,activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer())
+        with tf.name_scope("output"):
+            self.output = tf.contrib.layers.fully_connected(hidden, a_size, activation_fn=tf.nn.softmax, biases_initializer=None)
 
 
         # hidden = slim.fully_connected(self.state_in,h_size,biases_initializer=None,activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer())
         # hidden2 = slim.fully_connected(hidden,32,biases_initializer=None,activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer())
         # self.output = slim.fully_connected(hidden2,a_size,activation_fn=tf.nn.softmax,biases_initializer=None, weights_initializer=tf.contrib.layers.xavier_initializer())
 
-        self.p = tf.placeholder(tf.bool, [1,a_size])
-        self.invalid_moves = tf.constant(0., shape=[1,a_size])
-        self.valid_moves = tf.where(self.p, self.output, self.invalid_moves)  # Replace invalid moves in Qout by 0.
-        self.chosen_action = tf.argmax(self.valid_moves,1)
+        # with tf.name_scope("valid_moves"):
+            # self.p = tf.placeholder(tf.bool, [1,a_size])
+            # self.invalid_moves = tf.constant(0., shape=[1,a_size])
+            # self.valid_moves = tf.where(self.p, self.output, self.invalid_moves)  # Replace invalid moves in Qout by 0.
+        with tf.name_scope("action"):
+            self.chosen_action = tf.argmax(self.output,1)
 
-        #The next six lines establish the training proceedure. We feed the reward and chosen action into the network
+        #The next six lines establish the training procedure. We feed the reward and chosen action into the network
         #to compute the loss, and use it to update the network.
         self.reward_holder = tf.placeholder(shape=[None],dtype=tf.float32)
         self.action_holder = tf.placeholder(shape=[None],dtype=tf.int32)
@@ -53,41 +61,45 @@ class agent():
         self.indexes = tf.range(0, tf.shape(self.output)[0]) * tf.shape(self.output)[1] + self.action_holder
         self.responsible_outputs = tf.gather(tf.reshape(self.output, [-1]), self.indexes)
 
-        self.loss = -tf.reduce_mean(tf.log(self.responsible_outputs)*self.reward_holder)
+        with tf.name_scope("loss_function"):
+            self.loss = -tf.reduce_mean(tf.log(self.responsible_outputs)*self.reward_holder, name="loss")
 
-        tvars = tf.trainable_variables()
-        self.gradient_holders = []
-        for idx,var in enumerate(tvars):
-            placeholder = tf.placeholder(tf.float32,name=str(idx)+'_holder')
-            self.gradient_holders.append(placeholder)
+            tvars = tf.trainable_variables()
+            self.gradient_holders = []
+            for idx,var in enumerate(tvars):
+                placeholder = tf.placeholder(tf.float32,name=str(idx)+'_holder')
+                self.gradient_holders.append(placeholder)
 
-        self.gradients = tf.gradients(self.loss,tvars)
+            self.gradients = tf.gradients(self.loss,tvars)
 
-        optimizer = tf.train.AdamOptimizer(learning_rate=lr)
-        self.update_batch = optimizer.apply_gradients(zip(self.gradient_holders,tvars))
+        with tf.name_scope("optimise"):
+            optimizer = tf.train.AdamOptimizer(learning_rate=lr)
+            self.update_batch = optimizer.apply_gradients(zip(self.gradient_holders,tvars))
 
-def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
+def learn(nrows, ncols, maxPerEpisode, batchSize, nGames, lr):
     # Tetris initialisations
     tetrominos = createTetrominos()
+
+    avgs = []
     board = Board(nrows, ncols)
     board.reset()
-    avgs = []
 
     # tShapeRows, tShapeCols = tuple(map(operator.add, tetrominos[0].shape.shape, (1, 1)))
     tShape = tetrominos[0].paddedRotations[0]
     tShapeRows, tShapeCols = tShape.shape[0], tShape.shape[1]
-    inputLayerDim = [
-      None,
-      board.nrows + tShapeRows,
-      board.ncols,
-      1
-    ]
-    # (board.nrows * board.ncols) + (tShapeRows * tShapeCols)
+    # inputLayerDim = [
+    #   None,
+    #   board.nrows + tShapeRows,
+    #   board.ncols,
+    #   1
+    # ]
+    inputLayerDim = [None, (board.nrows * board.ncols) + (tShapeRows * tShapeCols)]
     actionsDim = board.ncols * 4
+    actions_list = np.arange(actionsDim)
 
     tf.reset_default_graph() #Clear the Tensorflow graph.
 
-    myAgent = agent(lr=1e-2,s_size=inputLayerDim,a_size=actionsDim,h_size=32) #Load the agent.
+    myAgent = agent(lr=lr,s_size=inputLayerDim,a_size=actionsDim,h_size=32) #Load the agent.
 
     total_episodes = nGames #Set total number of episodes to train agent on.
     max_ep = maxPerEpisode
@@ -97,6 +109,7 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
 
     # Launch the tensorflow graph
     with tf.Session() as sess:
+        writer = tf.summary.FileWriter("/tmp/tensorflow", sess.graph)
         sess.run(init)
         i = 0
         total_reward = []
@@ -106,18 +119,18 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
         for ix,grad in enumerate(gradBuffer):
             gradBuffer[ix] = grad * 0
 
-        while i < total_episodes:
+        while i <= total_episodes:
             board.reset()
             tetromino = util.randChoice(tetrominos)
-            s = util.cnnState(board, tetromino.paddedRotations[0])
+            s = util.pgState(board, tetromino.paddedRotations[0])
             running_reward = 0
             ep_history = []
 
             for j in range(max_ep):
-                if j == max_ep - 1:
+                if j == max_ep:
                     print("reached maximum at episode ", i, " with ", running_reward)
-                if i % 500 == 0:
-                  board.printBoard()
+                # if i % 500 == 0:
+                #   board.printBoard()
                 possibleMoves = tetromino.getPossibleMoves(board)
                 d = (len(possibleMoves) == 0)
 
@@ -141,30 +154,55 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
                     total_length.append(j)
                     break
 
-                bool_moves = [(x in possibleMoves) for x in range(actionsDim)]
+                # bool_moves = [(x in possibleMoves) for x in range(actionsDim)]
 
                 # Probabilistically pick an action given our network outputs.
-                o, a_dist = sess.run([myAgent.output, myAgent.valid_moves],feed_dict={myAgent.state_in:s, myAgent.p: [bool_moves]})
-                softmax_a_dist = [a_dist[0]/sum(a_dist[0])]
+                a_dist = sess.run([myAgent.output],feed_dict={myAgent.state_in:[s]})[0]
+                # softmax_a_dist = [a_dist[0]/sum(a_dist[0])]
+
+                valid_moves = [x if i in possibleMoves else 0. for i, x in enumerate(a_dist[0])]
 
                 # print(o)
                 # print(a_dist)
-
+                sum_v = sum(valid_moves)
+                # print(a_dist)
+                # print(sum_v)
+                # print(valid_moves)
+                if sum_v == 0:
+                  print('here')
+                  a = util.randChoice(possibleMoves)
+                else:
+                  softmax_a_dist = [valid_moves/sum_v]
+                #   print(softmax_a_dist)
+                  a = np.random.choice(actions_list,p=softmax_a_dist[0])
 
                 # print()
-                a = np.random.choice(softmax_a_dist[0],p=softmax_a_dist[0])
-                a = np.argmax(softmax_a_dist == a)
-                if i % 500 == 0:
-                    tetromino.printShape(0)
+                # a = np.random.choice(softmax_a_dist[0],p=softmax_a_dist[0])
+                # a = np.argmax(softmax_a_dist == a)
+                # if i % 100 == 0:
+                    # tetromino.printShape(0)
+                    # print(bool_moves)
                     # print(softmax_a_dist)
-                    # print(a)
+                    # print(a_dist)
 
                 rot, col = divmod(a, board.ncols)
-                r = board.act(tetromino, col, rot)
+                if np.isnan(softmax_a_dist).any():
+                    # print(bool_moves)
+                    print(a_dist)
+                    print(softmax_a_dist)
+                    print(lr)
+                    return
+
+                try:
+                    r = board.act(tetromino, col, rot)
+                except:
+                    # print(bool_moves)
+                    print(softmax_a_dist)
+                    return
 
                 # Random Tetromino for next state
                 nextTetromino = util.randChoice(tetrominos)
-                s1 = util.cnnState(board, nextTetromino.paddedRotations[0])
+                s1 = util.pgState(board, nextTetromino.paddedRotations[0])
 
                 ep_history.append([s,a,r,s1])
                 s = s1
@@ -173,9 +211,10 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames):
                 running_reward += r
 
                 #Update our running tally of scores.
-            if i % 100 == 0:
-                current_avg = np.mean(total_reward[-100:])
+            if i % 40 == 0:
+                current_avg = np.mean(total_reward[-40:])
                 print(i, ' : ', current_avg)
                 avgs.append(current_avg)
             i += 1
+        writer.close()
     return avgs

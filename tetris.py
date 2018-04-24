@@ -69,7 +69,7 @@ def learn(nGames, nRows, nCols, maxPerEpisode, batchSize):
 
 def main():
 
-  run50QTable(5, 3)
+  run50QTable(5, 4)
   return
   # Choose from "qTable", "qNetwork", "cnn", "policyGradient"
   learnType = "policyGradient"
@@ -85,11 +85,11 @@ def main():
   saveFreq = 50
 
   # Universal variables
-  nGames = 200
+  nGames = 3000
   tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
-  nRows = 16
-  nCols = 10
-  maxPerEpisode = 500
+  nRows = 5
+  nCols = 3
+  maxPerEpisode = 100
   boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
 
   # compareGraph = CompareGraph(tSteps)
@@ -114,10 +114,10 @@ def main():
 
   # Arguments to pass into learn function
   args = {
-    "qTable": (epsilon, gamma, alpha, nGames, False, True),
+    "qTable": (epsilon, gamma, alpha, nGames, False, True, nRows, nCols),
     "qNetwork": (epsilon, gamma, alpha, nGames, True),
     "cnn": (epsilon, gamma, alpha, nGames, nRows, nCols),
-    "policyGradient": (nRows, nCols, maxPerEpisode, batchSize, nGames),
+    "policyGradient": (nRows, nCols, maxPerEpisode, batchSize, nGames, alpha),
     "a3c": (nRows, nCols, maxPerEpisode, saveFreq)
   }
 
