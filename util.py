@@ -12,6 +12,9 @@ def strState(board, tetromino):
     tString = ''.join(''.join('%d' %x for x in row) for row in tetromino)
     return bString + tString
 
+def pgState():
+    return np.append(tetromino.flatten(), b.board.flatten())
+
 def networkState(board, tetromino):
     return np.array([np.append(board.flatten(), tetromino.flatten())])
 
