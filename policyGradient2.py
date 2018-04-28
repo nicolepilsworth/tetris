@@ -211,7 +211,7 @@ def learn(nrows, ncols, maxPerEpisode, batchSize, nGames, lr):
                 running_reward += r
 
                 #Update our running tally of scores.
-            if i % 40 == 0:
+            if i % 40 == 0 and i != 0:
                 current_avg = np.mean(total_reward[-40:])
                 print(i, ' : ', current_avg)
                 avgs.append(current_avg)

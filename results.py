@@ -15,25 +15,30 @@ from qNetwork import learn as qNetworkLearn
 from cnn import learn as cnnLearn
 from policyGradient2 import learn as pgLearn
 from a3c import train as a3cTrain
+from rawData import RawData
 
-def run50QTable(nRows, nCols):
+def getResults():
 
     # Choose from "qTable", "qNetwork", "cnn", "policyGradient", "a3c"
-    learnType = "policyGradient"
+    learnType = "qTable"
 
     # Q-learning variables
-    epsilon = 0.1 # For epsilon-greedy action choice
-    gamma = 0.8 # Discount factor
-    alpha = 0.1 # Value fnction learning rate
+    epsilon = 0.5 # For epsilon-greedy action choice
+    gamma = 0.9 # Discount factor
+    alpha = 0.3 # Value fnction learning rate
     rand = False # Whether to choose actions randomly of use Q-learning
 
-    # Policy gradient variables
+    nRows = 5
+    nCols = 4
     batchSize = 10
-    saveFreq = 50
+    nGames = 120
+    # variables = [1,10,50]
+    variables = [0.01, 0.1, 0.5]
+    # variables = [0.1]
+    graph_filename = "tabq-epsilon-54"
+    maxPerEpisode = 100
+    l = float("inf")
 
-    # Universal variables
-    nGames = 50000
-    maxPerEpisode = 500
     boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
 
     # Specific learn function per learn type
@@ -45,24 +50,15 @@ def run50QTable(nRows, nCols):
       "a3c": a3cTrain
     }
 
-    # Arguments to pass into learn function
-    args = {
-      "qTable": (epsilon, gamma, alpha, nGames, False, True, nRows, nCols),
-      "qNetwork": (epsilon, gamma, alpha, nGames, True),
-      "cnn": (epsilon, gamma, alpha, nGames, nRows, nCols),
-      "policyGradient": (nRows, nCols, maxPerEpisode, batchSize, nGames),
-      "a3c": (nRows, nCols, maxPerEpisode, saveFreq)
-    }
-
     allAvgs = []
 
     # threads = [gevent.spawn(funcs[learnType], *args[learnType]) for i in range(20)]
     # avgs = gevent.joinall(threads)
     # print(np.mean([thread.value for thread in threads], axis=0))
 
-    variables = [1,10,30,50]
+
     colours = ["0,76,153", "178,102,255", "0,153,76", "204,0,0"]
-    # epsilons = [0.1]
+
     graph_lines = []
     interval = 40
     t_steps = np.arange(0, nGames + interval, interval)
@@ -70,45 +66,101 @@ def run50QTable(nRows, nCols):
     graph_lines = []
     x_title = "Number of episodes"
     y_title = "Average score"
-    agents = 1
+    agents = 2
+    # allData = RawData().collatedData
+    allData = {}
 
     for idx, x in enumerate(variables):
         allAvgs = []
         # QTABLE:
-        # algArgs = (x, gamma, alpha, nGames, False, True, nRows, nCols)
+        algArgs = (x, gamma, alpha, nGames, False, True, nRows, nCols)
         # QNETWORK:
-        # algArgs = (e, gamma, alpha, nGames, True, nRows, nCols)
+        # algArgs = (epsilon, gamma, x, nGames, True, nRows, nCols)
         # POLICYGRADIENT:
-        algArgs = (nRows, nCols, maxPerEpisode, x, nGames, alpha)
+        # algArgs = (nRows, nCols, maxPerEpisode, x, nGames, alpha)
+        # A3C:
+        # algArgs = (nRows, nCols, maxPerEpisode, interval, nGames)
         for i in range(agents):
-            print(i)
-            avgs = np.array(funcs[learnType](*algArgs))
-            allAvgs.append(avgs)
-        mean = np.mean(allAvgs, axis=0)
-        # print(mean)
-        std_dev = np.std(allAvgs, axis=0)
-        y_upper = np.add(mean, std_dev)
-        y_lower = np.subtract(mean, std_dev)
-        y_lower = y_lower[::-1]
+            print(idx, i)
+            try:
+                avgs = funcs[learnType](*algArgs)
+            except:
+                print("error")
+                continue
 
-        graph_lines.extend(({
-                "x": np.concatenate([t_steps, t_steps_rev]),
-                "y": np.concatenate([y_upper, y_lower]),
-                "fill":'tozerox',
-                "fillcolor":'rgba({},0.2)'.format(colours[idx]),
-                "line":Line(color='transparent'),
-                "showlegend":False,
-                "name":'batch size = ' + str(x)
-            },
-            {   "x":t_steps,
-                "y":mean,
-                "line":Line(color="rgb({})".format(colours[idx])),
-                "mode":'lines',
-                "name":'batch size = ' + str(x)
-            }
-        ))
+            if learnType == "a3c":
+                allAvgs = allAvgs + avgs
+        # if learnType == "a3c":
+        #
+        #     print(l)
+        #     allAvgs = list(map(lambda x: x[:l], allAvgs))
+    #
+    #
+    # for idx, x in enumerate(variables):
+    #
+        # allAvgs = np.concatenate(tuple(list(map(lambda v: v[str(x)], allData))), axis=0)
+        # import pdb; pdb.set_trace()
+        allData[str(x)] = allAvgs
+        if learnType == "a3c":
+            l = min(min(map(len, allAvgs)), l)
+        # else:
+        #     print(allAvgs)
+        #     mean = np.mean(allAvgs, axis=0)
+        #     std_dev = np.std(allAvgs, axis=0)
+        #     y_upper = np.add(mean, std_dev)
+        #     y_lower = np.subtract(mean, std_dev)
+        #     y_lower = y_lower[::-1]
+        #
+        #     graph_lines.extend(({
+        #             "x": np.concatenate([t_steps, t_steps_rev]),
+        #             "y": np.concatenate([y_upper, y_lower]),
+        #             "fill":'tozerox',
+        #             "fillcolor":'rgba({},0.2)'.format(colours[idx]),
+        #             "line":Line(color='transparent'),
+        #             "showlegend":False,
+        #             "name":'alpha = ' + str(x)
+        #         },
+        #         {   "x":t_steps,
+        #             "y":mean,
+        #             "line":Line(color="rgb({})".format(colours[idx])),
+        #             "mode":'lines',
+        #             "name":'alpha = ' + str(x)
+        #         }
+        #     ))
+
+    if learnType == "a3c":
+        t_steps = t_steps[:l]
+        t_steps_rev = t_steps_rev[-l:]
+        for idx, x in enumerate(variables):
+            allAvgs = allData[str(x)]
+            allAvgs = list(map(lambda x: x[:l], allAvgs))
+
+            mean = np.mean(allAvgs, axis=0)
+            std_dev = np.std(allAvgs, axis=0)
+            y_upper = np.add(mean, std_dev)
+            y_lower = np.subtract(mean, std_dev)
+            y_lower = y_lower[::-1]
+
+            graph_lines.extend(({
+                    "x": np.concatenate([t_steps, t_steps_rev]),
+                    "y": np.concatenate([y_upper, y_lower]),
+                    "fill":'tozerox',
+                    "fillcolor":'rgba({},0.2)'.format(colours[idx]),
+                    "line":Line(color='transparent'),
+                    "showlegend":False,
+                    "name":'alpha = ' + str(x)
+                },
+                {   "x":t_steps,
+                    "y":mean,
+                    "line":Line(color="rgb({})".format(colours[idx])),
+                    "mode":'lines',
+                    "name":'alpha = ' + str(x)
+                }
+            ))
+    print(allData)
 
 
-    print(graph_lines)
-    # graph = Graph(t_steps, graph_lines, x_title, y_title)
+
+    # print(graph_lines)
+    # graph = Graph(t_steps, graph_lines, x_title, y_title, graph_filename)
     # graph.plot()

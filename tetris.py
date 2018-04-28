@@ -12,7 +12,7 @@ from qNetwork import learn as qNetworkLearn
 from cnn import learn as cnnLearn
 from policyGradient2 import learn as pgLearn
 from a3c import train as a3cTrain
-from results import run50QTable
+from results import getResults
 
 def playByPolicy(Q, maxPerEpisode):
   tetrominos = createTetrominos()
@@ -69,15 +69,15 @@ def learn(nGames, nRows, nCols, maxPerEpisode, batchSize):
 
 def main():
 
-  run50QTable(5, 4)
+  getResults()
   return
   # Choose from "qTable", "qNetwork", "cnn", "policyGradient"
-  learnType = "policyGradient"
+  learnType = "a3c"
 
   # Q-learning variables
   epsilon = 0.08 # For epsilon-greedy action choice
   gamma = 0.7 # Discount factor
-  alpha = 1e-2 # Value fnction learning rate
+  alpha = 0.5 # Value fnction learning rate
   rand = False # Whether to choose actions randomly of use Q-learning
 
   # Policy gradient variables
@@ -85,11 +85,11 @@ def main():
   saveFreq = 50
 
   # Universal variables
-  nGames = 3000
+  nGames = 1000
   tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
   nRows = 5
-  nCols = 3
-  maxPerEpisode = 100
+  nCols = 4
+  maxPerEpisode = 1000
   boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
 
   # compareGraph = CompareGraph(tSteps)
@@ -115,7 +115,7 @@ def main():
   # Arguments to pass into learn function
   args = {
     "qTable": (epsilon, gamma, alpha, nGames, False, True, nRows, nCols),
-    "qNetwork": (epsilon, gamma, alpha, nGames, True),
+    "qNetwork": (epsilon, gamma, alpha, nGames, True, nRows, nCols),
     "cnn": (epsilon, gamma, alpha, nGames, nRows, nCols),
     "policyGradient": (nRows, nCols, maxPerEpisode, batchSize, nGames, alpha),
     "a3c": (nRows, nCols, maxPerEpisode, saveFreq)
@@ -130,9 +130,9 @@ def main():
 
 
 
-  # if learnType == "policyGradient":
-  #   graph = PgGraph(tSteps, avgs, batchSize, maxPerEpisode, nGames, boardSize)
-  #   graph.plot()
+  if learnType == "policyGradient":
+    graph = PgGraph(tSteps, avgs, batchSize, maxPerEpisode, nGames, boardSize)
+    graph.plot()
   # else:
   #   graph = Graph(tSteps, avgs, learnType, epsilon, gamma, alpha, nGames, boardSize)
   #   graph.plot()

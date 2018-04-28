@@ -76,3 +76,14 @@ def epsilonGreedy(q, epsilon, possMoves, nCols):
             qPossMoves.append(q[col][rot])
         highest = np.argwhere(qPossMoves == np.amax(qPossMoves))
         return possMoves[randChoice(highest.flatten().tolist())]
+
+def bestMove(q, possMoves):
+    highest = np.argwhere(q == np.amax(q))
+    moves = []
+    try:
+        moves = possMoves[randChoice(highest.flatten().tolist())]
+    except:
+        print(q)
+        print(possMoves)
+        print(highest)
+    return moves

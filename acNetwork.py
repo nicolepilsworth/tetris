@@ -27,12 +27,19 @@ class AC_Network():
     def __init__(self,s_size,a_size,scope,trainer):
 
         with tf.variable_scope(scope):
+          with tf.name_scope("board_input"):
             #Input and visual encoding layers
-            self.imageIn = tf.placeholder(shape=s_size,dtype=tf.float32,name="imageIn")
-            self.conv1 = tf.layers.conv2d(inputs=self.imageIn, filters=16, kernel_size=[3, 3], padding="same")
-            self.conv2 = tf.layers.conv2d(inputs=self.conv1, filters=32, kernel_size=[3, 3], padding="same")
-            self.conv3 = tf.layers.conv2d(inputs=self.conv2, filters=64, kernel_size=[3, 3], padding="same")
-            # hidden1 = tf.contrib.layers.fully_connected(self.conv2, 32, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
+            self.imageIn = tf.placeholder(shape=s_size,dtype=tf.float32,name="board_input")
+          # with tf.name_scope("conv_layers"):
+          #   self.conv1 = tf.layers.conv2d(inputs=self.imageIn, filters=16, kernel_size=[3, 3], padding="same", name="conv1")
+          #   self.conv2 = tf.layers.conv2d(inputs=self.conv1, filters=32, kernel_size=[3, 3], padding="same", name="conv2")
+          #   self.conv3 = tf.layers.conv2d(inputs=self.conv2, filters=64, kernel_size=[3, 3], padding="same", name="conv3")
+
+            hidden1 = tf.contrib.layers.fully_connected(self.imageIn , 32, activation_fn=tf.nn.relu, biases_initializer=None)
+            # hidden1 = tf.contrib.layers.fully_connected(self.imageIn , 32, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
+
+            ##########################################
+            # NOT USED:
             # hidden2 = tf.contrib.layers.fully_connected(hidden1, 32, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
             # self.pool1 = tf.layers.max_pooling2d(inputs=self.conv1, pool_size=[2, 2], strides=1)
             # self.pool2 = tf.layers.max_pooling2d(inputs=self.conv2, pool_size=[2, 2], strides=1)
@@ -40,7 +47,6 @@ class AC_Network():
             # self.pool3 = tf.layers.max_pooling2d(inputs=self.conv3, pool_size=[2, 2], strides=1)
             # pool2_flat = tf.reshape(self.conv2, [-1, 64])
             # dense = tf.layers.dense(inputs=self.conv1, units=16, activation=tf.nn.relu)
-
             # self.conv3 = tf.layers.conv2d(inputs=self.conv2, filters=64, kernel_size=[3, 3])
             # self.conv1 = tf.nn.conv2d(activation_fn=tf.nn.elu,
             #     inputs=self.imageIn,num_outputs=32,
@@ -49,26 +55,36 @@ class AC_Network():
             # self.conv2 = tf.nn.conv2d(activation_fn=tf.nn.elu,
             #     inputs=self.conv1,num_outputs=32,
             #     kernel_size=[3,3],stride=[1,1],padding='VALID')
-            hidden = slim.fully_connected(slim.flatten(self.conv3),40,activation_fn=tf.nn.relu)
+            ##########################################
+
+          # with tf.name_scope("fully_connected_layer"):
+          #   hidden = slim.fully_connected(slim.flatten(self.conv3),40,activation_fn=tf.nn.relu)
+
+        ##########################################
+        # NOT USED:
             # flatten_layer = tf.contrib.layers.flatten(hidden2)
             # dense_connected_layer = tf.contrib.layers.fully_connected(hidden, 128, activation_fn=tf.nn.relu)
             # dense_connected2 = tf.contrib.layers.fully_connected(dense_connected_layer, 48, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
-            self.tetromino = tf.placeholder(shape=[None, 1],dtype=tf.int32)
-            self.tetromino_onehot = tf.reshape(tf.one_hot(self.tetromino,7,dtype=tf.float32), shape=[-1, 7])
+        ##########################################
 
-            self.concat_layer = tf.concat([self.tetromino_onehot, hidden], 1)
-            # hidden = tf.layers.dense(inputs=flatten_layer,units=32,activation=tf.nn.relu)
-            hidden2 = slim.fully_connected(self.concat_layer,64,activation_fn=tf.nn.relu)
-            hidden3 = slim.fully_connected(hidden2,128,activation_fn=tf.nn.relu)
-            self.dropout = tf.layers.dropout(
-                inputs=hidden3, rate=0.4, training=True)
-            self.policy = tf.layers.dense(inputs=self.dropout, units=a_size, activation=tf.nn.softmax)
-            self.value = tf.layers.dense(inputs=self.dropout, units=1)
+          # with tf.name_scope("tetromino_input"):
+          #   self.tetromino = tf.placeholder(shape=[None, 1],dtype=tf.int32, name="tetromino_idx")
+          #   self.tetromino_onehot = tf.reshape(tf.one_hot(self.tetromino,7,dtype=tf.float32), shape=[-1, 7], name="tetromino_onehot")
+          # with tf.name_scope("layer_concat"):
+          #   self.concat_layer = tf.concat([self.tetromino_onehot, hidden], 1, name="concatenation")
+          # with tf.name_scope("fully_connected_layers"):
+          #   hidden2 = slim.fully_connected(self.concat_layer,64,activation_fn=tf.nn.relu)
+          #   hidden3 = slim.fully_connected(hidden2,128,activation_fn=tf.nn.relu)
+          # with tf.name_scope("dropout"):
+          #   self.dropout = tf.layers.dropout(
+          #       inputs=hidden3, rate=0.4, training=True, name="dropout")
+          # with tf.name_scope("output"):
+          #   self.policy = tf.layers.dense(inputs=self.dropout, units=a_size, activation=tf.nn.softmax, name="policy")
+          #   self.value = tf.layers.dense(inputs=self.dropout, units=1, name="value")
 
-            # self.p = tf.placeholder(tf.bool, [1,a_size])
-            # self.invalid_moves = tf.constant(0., shape=[1,a_size])
-            # self.policy = tf.where(self.p, self.policy_all, self.invalid_moves)  # Replace invalid moves in policy_all by 0.
-            # self.value =  tf.where(self.p, self.value_all, self.invalid_moves)
+            self.policy = tf.layers.dense(inputs=hidden1, units=a_size, activation=tf.nn.softmax, name="policy")
+            self.value = tf.layers.dense(inputs=hidden1, units=1, name="value")
+
 
             #Only the worker network need ops for loss functions and gradient updating.
             if scope != 'global':
