@@ -20,7 +20,7 @@ from rawData import RawData
 def getResults():
 
     # Choose from "qTable", "qNetwork", "cnn", "policyGradient", "a3c"
-    learnType = "qTable"
+    learnType = "a3c"
 
     # Q-learning variables
     epsilon = 0.5 # For epsilon-greedy action choice
@@ -31,10 +31,10 @@ def getResults():
     nRows = 5
     nCols = 4
     batchSize = 10
-    nGames = 120
+    nGames = 400
     # variables = [1,10,50]
-    variables = [0.01, 0.1, 0.5]
-    # variables = [0.1]
+    # variables = [0.01, 0.1, 0.5]
+    variables = [0.1]
     graph_filename = "tabq-epsilon-54"
     maxPerEpisode = 100
     l = float("inf")
@@ -73,23 +73,25 @@ def getResults():
     for idx, x in enumerate(variables):
         allAvgs = []
         # QTABLE:
-        algArgs = (x, gamma, alpha, nGames, False, True, nRows, nCols)
+        # algArgs = (x, gamma, alpha, nGames, False, True, nRows, nCols)
         # QNETWORK:
         # algArgs = (epsilon, gamma, x, nGames, True, nRows, nCols)
         # POLICYGRADIENT:
         # algArgs = (nRows, nCols, maxPerEpisode, x, nGames, alpha)
         # A3C:
-        # algArgs = (nRows, nCols, maxPerEpisode, interval, nGames)
+        algArgs = (nRows, nCols, maxPerEpisode, interval, nGames)
         for i in range(agents):
             print(idx, i)
-            try:
-                avgs = funcs[learnType](*algArgs)
-            except:
-                print("error")
-                continue
+            # try:
+            avgs = funcs[learnType](*algArgs)
+            # except:
+            #     print("error")
+            #     continue
 
             if learnType == "a3c":
                 allAvgs = allAvgs + avgs
+            else:
+                allAvgs.append(avgs)
         # if learnType == "a3c":
         #
         #     print(l)
@@ -100,7 +102,10 @@ def getResults():
     #
         # allAvgs = np.concatenate(tuple(list(map(lambda v: v[str(x)], allData))), axis=0)
         # import pdb; pdb.set_trace()
+        print(allAvgs)
         allData[str(x)] = allAvgs
+        # allData[str(x)] = list(filter(lambda v: len(v) == nGames/interval + 1, allAvgs))
+        # print("agents: ", )
         if learnType == "a3c":
             l = min(min(map(len, allAvgs)), l)
         # else:
@@ -127,8 +132,8 @@ def getResults():
         #             "name":'alpha = ' + str(x)
         #         }
         #     ))
-
     if learnType == "a3c":
+        print("L:", l)
         t_steps = t_steps[:l]
         t_steps_rev = t_steps_rev[-l:]
         for idx, x in enumerate(variables):
@@ -148,19 +153,18 @@ def getResults():
                     "fillcolor":'rgba({},0.2)'.format(colours[idx]),
                     "line":Line(color='transparent'),
                     "showlegend":False,
-                    "name":'alpha = ' + str(x)
+                    "name":'algorithm = A3C'
                 },
                 {   "x":t_steps,
                     "y":mean,
                     "line":Line(color="rgb({})".format(colours[idx])),
                     "mode":'lines',
-                    "name":'alpha = ' + str(x)
+                    "name":'algorithm = A3C'
                 }
             ))
-    print(allData)
 
 
 
-    # print(graph_lines)
+    print(graph_lines)
     # graph = Graph(t_steps, graph_lines, x_title, y_title, graph_filename)
     # graph.plot()

@@ -100,7 +100,7 @@ class Worker():
         with sess.as_default(), sess.graph.as_default():
             # writer = tf.summary.FileWriter("/tmp/tensorflow", sess.graph)
 
-            while not coord.should_stop():
+            while episode_count <= nGames:
                 sess.run(self.update_local_ops)
                 episode_buffer = []
                 episode_values = []
@@ -220,16 +220,13 @@ class Worker():
 
 
                 # Periodically save gifs of episodes, model parameters, and summary statistics.
-                if episode_count % saveFreq == 0 and episode_count != 0:
+                if episode_count % saveFreq == 0:
 
                     mean_reward = np.mean(self.episode_rewards[-saveFreq:])
                     mean_length = np.mean(self.episode_lengths[-saveFreq:])
                     mean_value = np.mean(self.episode_mean_values[-saveFreq:])
                     print(mean_reward)
                     self.averages.append(mean_reward)
-                if episode_count == nGames:
-                    print("stopping:", self.name)
-                    return
 
                 if self.name == 'worker_0':
                     sess.run(self.increment)
