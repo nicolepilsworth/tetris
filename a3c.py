@@ -19,7 +19,7 @@ def stop_training(coord):
   print("stopping training")
   coord.request_stop()
 
-def train(nrows, ncols, max_episode_length, saveFreq, nGames):
+def train(nrows, ncols, max_episode_length, saveFreq, nGames, lr, nLayers):
     gamma = .9 # discount rate for advantage estimation and reward discounting
 
     # Tetris initialisations
@@ -43,16 +43,16 @@ def train(nrows, ncols, max_episode_length, saveFreq, nGames):
     tf.reset_default_graph()
 
     global_episodes = tf.Variable(0,dtype=tf.int32,name='global_episodes',trainable=False)
-    # trainer = tf.train.RMSPropOptimizer(learning_rate=7e-4, decay=0.85, epsilon=0.1)
-    trainer = tf.train.AdamOptimizer(learning_rate=7e-3)
-    master_network = AC_Network(s_size,a_size,'global',None) # Generate global network
+    # trainer = tf.train.RMSPropOptimizer(learning_rate=lr, decay=0.85, epsilon=0.1)
+    trainer = tf.train.AdamOptimizer(learning_rate=lr)
+    master_network = AC_Network(s_size,a_size,'global',None,nLayers) # Generate global network
     # num_workers = 1
     num_workers = multiprocessing.cpu_count() # Set workers ot number of available CPU threads
     workers = []
     # Create worker classes
     for i in range(num_workers):
         board = Board(nrows, ncols)
-        workers.append(Worker(i,s_size,a_size,trainer,global_episodes, board))
+        workers.append(Worker(i,s_size,a_size,trainer,global_episodes, board,nLayers))
 
     with tf.Session() as sess:
 

@@ -3,6 +3,8 @@ import numpy as np
 import random
 import plotly.plotly as py
 from plotly.graph_objs import *
+import tensorflow as tf
+import tensorflow.contrib.slim as slim
 
 from tetrominos import Tetromino, createTetrominos
 from board import Board
@@ -19,7 +21,7 @@ from rawData import RawData
 
 def getResults():
 
-    # Choose from "qTable", "qNetwork", "cnn", "policyGradient", "a3c"
+    # Choose from "qTable", "qNetwork", "policyGradient", "a3c"
     learnType = "a3c"
 
     # Q-learning variables
@@ -27,15 +29,16 @@ def getResults():
     gamma = 0.9 # Discount factor
     alpha = 0.3 # Value fnction learning rate
     rand = False # Whether to choose actions randomly of use Q-learning
+    lr = 0.01
 
     nRows = 5
     nCols = 4
     batchSize = 10
-    nGames = 400
+    nGames = 280
     # variables = [1,10,50]
     # variables = [0.01, 0.1, 0.5]
-    variables = [0.1]
-    graph_filename = "tabq-epsilon-54"
+    variables = [1, 4, 8]
+    graph_filename = "a3c-54"
     maxPerEpisode = 100
     l = float("inf")
 
@@ -66,7 +69,7 @@ def getResults():
     graph_lines = []
     x_title = "Number of episodes"
     y_title = "Average score"
-    agents = 2
+    agents = 1
     # allData = RawData().collatedData
     allData = {}
 
@@ -79,9 +82,9 @@ def getResults():
         # POLICYGRADIENT:
         # algArgs = (nRows, nCols, maxPerEpisode, x, nGames, alpha)
         # A3C:
-        algArgs = (nRows, nCols, maxPerEpisode, interval, nGames)
+        algArgs = (nRows, nCols, maxPerEpisode, interval, nGames, lr, x)
         for i in range(agents):
-            print(idx, i)
+            # print(idx, i)
             # try:
             avgs = funcs[learnType](*algArgs)
             # except:
@@ -92,52 +95,41 @@ def getResults():
                 allAvgs = allAvgs + avgs
             else:
                 allAvgs.append(avgs)
-        # if learnType == "a3c":
-        #
-        #     print(l)
-        #     allAvgs = list(map(lambda x: x[:l], allAvgs))
-    #
-    #
-    # for idx, x in enumerate(variables):
-    #
         # allAvgs = np.concatenate(tuple(list(map(lambda v: v[str(x)], allData))), axis=0)
-        # import pdb; pdb.set_trace()
-        print(allAvgs)
         allData[str(x)] = allAvgs
-        # allData[str(x)] = list(filter(lambda v: len(v) == nGames/interval + 1, allAvgs))
-        # print("agents: ", )
         if learnType == "a3c":
+
             l = min(min(map(len, allAvgs)), l)
-        # else:
-        #     print(allAvgs)
-        #     mean = np.mean(allAvgs, axis=0)
-        #     std_dev = np.std(allAvgs, axis=0)
-        #     y_upper = np.add(mean, std_dev)
-        #     y_lower = np.subtract(mean, std_dev)
-        #     y_lower = y_lower[::-1]
-        #
-        #     graph_lines.extend(({
-        #             "x": np.concatenate([t_steps, t_steps_rev]),
-        #             "y": np.concatenate([y_upper, y_lower]),
-        #             "fill":'tozerox',
-        #             "fillcolor":'rgba({},0.2)'.format(colours[idx]),
-        #             "line":Line(color='transparent'),
-        #             "showlegend":False,
-        #             "name":'alpha = ' + str(x)
-        #         },
-        #         {   "x":t_steps,
-        #             "y":mean,
-        #             "line":Line(color="rgb({})".format(colours[idx])),
-        #             "mode":'lines',
-        #             "name":'alpha = ' + str(x)
-        #         }
-        #     ))
+        else:
+            mean = np.mean(allAvgs, axis=0)
+            std_dev = np.std(allAvgs, axis=0)
+            y_upper = np.add(mean, std_dev)
+            y_lower = np.subtract(mean, std_dev)
+            y_lower = y_lower[::-1]
+
+            graph_lines.extend(({
+                    "x": np.concatenate([t_steps, t_steps_rev]),
+                    "y": np.concatenate([y_upper, y_lower]),
+                    "fill":'tozerox',
+                    "fillcolor":'rgba({},0.2)'.format(colours[idx]),
+                    "line":Line(color='transparent'),
+                    "showlegend":False,
+                    "name":'alpha = ' + str(x)
+                },
+                {   "x":t_steps,
+                    "y":mean,
+                    "line":Line(color="rgb({})".format(colours[idx])),
+                    "mode":'lines',
+                    "name":'alpha = ' + str(x)
+                }
+            ))
     if learnType == "a3c":
         print("L:", l)
         t_steps = t_steps[:l]
         t_steps_rev = t_steps_rev[-l:]
         for idx, x in enumerate(variables):
             allAvgs = allData[str(x)]
+            # allAvgs = np.concatenate(tuple(list(map(lambda v: v[str(x)], allData))), axis=0)
             allAvgs = list(map(lambda x: x[:l], allAvgs))
 
             mean = np.mean(allAvgs, axis=0)
@@ -153,18 +145,18 @@ def getResults():
                     "fillcolor":'rgba({},0.2)'.format(colours[idx]),
                     "line":Line(color='transparent'),
                     "showlegend":False,
-                    "name":'algorithm = A3C'
+                    "name":'#layers = ' + str(x)
                 },
                 {   "x":t_steps,
                     "y":mean,
                     "line":Line(color="rgb({})".format(colours[idx])),
                     "mode":'lines',
-                    "name":'algorithm = A3C'
+                    "name":'#layers = ' + str(x)
                 }
             ))
 
 
 
-    print(graph_lines)
-    # graph = Graph(t_steps, graph_lines, x_title, y_title, graph_filename)
-    # graph.plot()
+    # print(graph_lines)
+    graph = Graph(t_steps, graph_lines, x_title, y_title, graph_filename)
+    graph.plot()

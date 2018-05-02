@@ -34,7 +34,7 @@ def update_target_graph(from_scope,to_scope):
     return op_holder
 
 class Worker():
-    def __init__(self,name,s_size,a_size,trainer,global_episodes, board):
+    def __init__(self,name,s_size,a_size,trainer,global_episodes, board,nLayers):
         self.name = "worker_" + str(name)
         self.number = name
         self.trainer = trainer
@@ -48,7 +48,7 @@ class Worker():
         self.a_size = a_size
 
         #Create the local copy of the network and the tensorflow op to copy global paramters to local network
-        self.local_AC = AC_Network(s_size,a_size,self.name,trainer)
+        self.local_AC = AC_Network(s_size,a_size,self.name,trainer,nLayers)
         self.update_local_ops = update_target_graph('global',self.name)
 
         self.actions = list(range(board.ncols * 4))
@@ -90,6 +90,7 @@ class Worker():
         return v_l / len(rollout),p_l / len(rollout),e_l / len(rollout), g_n, v_n, adv/len(rollout)
 
     def work(self,max_episode_length,gamma,global_AC,sess,coord,saveFreq, nGames):
+
         episode_count = sess.run(self.global_episodes)
         total_steps = 0
         actions_list = np.arange(self.a_size)
@@ -99,7 +100,6 @@ class Worker():
 
         with sess.as_default(), sess.graph.as_default():
             # writer = tf.summary.FileWriter("/tmp/tensorflow", sess.graph)
-
             while episode_count <= nGames:
                 sess.run(self.update_local_ops)
                 episode_buffer = []
@@ -221,7 +221,6 @@ class Worker():
 
                 # Periodically save gifs of episodes, model parameters, and summary statistics.
                 if episode_count % saveFreq == 0:
-
                     mean_reward = np.mean(self.episode_rewards[-saveFreq:])
                     mean_length = np.mean(self.episode_lengths[-saveFreq:])
                     mean_value = np.mean(self.episode_mean_values[-saveFreq:])

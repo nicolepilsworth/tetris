@@ -8,71 +8,26 @@ from pgGraph import PgGraph
 from compareGraph import CompareGraph
 import util
 from qTable import learn as qTableLearn
+from qTable import playByPolicy
 from qNetwork import learn as qNetworkLearn
 from cnn import learn as cnnLearn
 from policyGradient2 import learn as pgLearn
 from a3c import train as a3cTrain
 from results import getResults
 
-def playByPolicy(Q, maxPerEpisode):
-  tetrominos = createTetrominos()
-  board = Board(5, 3)
-  board.printBoard()
-  totalLinesCleared = 0
-  col = 0
-  rot = 0
-
-  for j in range(maxPerEpisode):
-    tetromino = util.randChoice(tetrominos)
-
-    # Moves come in the format [columnIndex, rotationIndex]
-    possibleMoves = tetromino.getPossibleMoves(board)
-
-    # Game over condition
-    if len(possibleMoves) == 0:
-        print("GAME OVER")
-        print("Lines cleared: ", board.linesCleared)
-        return
-
-    s = util.strState(board.board, tetromino.shape)
-    # Check if Q(s, :) exists, use policy if it does
-    if s in Q:
-      [col, rot] = util.epsilonGreedy(Q[s], -1, possibleMoves)
-    else:
-      [col, rot] = util.randChoice(possibleMoves)
-
-    tetromino.printShape(rot)
-
-    # Perform action and collect reward
-    r = board.act(tetromino, col, rot)
-    board.printBoard()
-
-  print("Maximum number of moves reached: ", maxPerEpisode)
-  print("Lines cleared: ", board.linesCleared)
-
-
-def randVsQ(epsilon, gamma, alpha):
-  nGames = 10000
-  tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
-  randAvgs = []
-  # randAvgs = qTableLearn(epsilon, gamma, alpha, nGames, True, True)
-  qAvgs = pgLearn(5, 4)
-  graph = Graph(tSteps, randAvgs, qAvgs, "Policy Gradient", epsilon, gamma, alpha, nGames)
-  graph.plotRandVsQ()
-
-def learn(nGames, nRows, nCols, maxPerEpisode, batchSize):
-    tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
-    avgs = pgLearn(nRows, nCols, maxPerEpisode, batchSize, nGames)
-    graph = PgGraph(tSteps, avgs, batchSize, maxPerEpisode, nGames)
-    graph.plot()
-
+def randomPlay(maxPerEpisode, nRows, nCols):
+    return playByPolicy({}, maxPerEpisode, nRows, nCols)
 
 def main():
 
   getResults()
   return
   # Choose from "qTable", "qNetwork", "cnn", "policyGradient"
-  learnType = "a3c"
+  learnType = "qTable"
+
+  # RANDOM PLAY STATS
+  print(np.mean([randomPlay(200, 5, 4) for i in range(100)]))
+  return
 
   # Q-learning variables
   epsilon = 0.08 # For epsilon-greedy action choice
@@ -89,7 +44,7 @@ def main():
   tSteps = [100*i for i in range(1, int(nGames/100 + 1))]
   nRows = 5
   nCols = 4
-  maxPerEpisode = 1000
+  maxPerEpisode = 200
   boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
 
   # compareGraph = CompareGraph(tSteps)

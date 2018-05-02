@@ -1,5 +1,3 @@
-import tensorflow as tf
-import tensorflow.contrib.slim as slim
 import numpy as np
 import util
 import operator
@@ -24,18 +22,21 @@ def normalized_columns_initializer(std=1.0):
     return _initializer
 
 class AC_Network():
-    def __init__(self,s_size,a_size,scope,trainer):
+    def __init__(self,s_size,a_size,scope,trainer,nLayers):
+
 
         with tf.variable_scope(scope):
           with tf.name_scope("board_input"):
             #Input and visual encoding layers
             self.imageIn = tf.placeholder(shape=s_size,dtype=tf.float32,name="board_input")
+            self.hidden = [tf.contrib.layers.fully_connected(self.imageIn , 32, activation_fn=tf.nn.relu, biases_initializer=None)]
           # with tf.name_scope("conv_layers"):
           #   self.conv1 = tf.layers.conv2d(inputs=self.imageIn, filters=16, kernel_size=[3, 3], padding="same", name="conv1")
           #   self.conv2 = tf.layers.conv2d(inputs=self.conv1, filters=32, kernel_size=[3, 3], padding="same", name="conv2")
           #   self.conv3 = tf.layers.conv2d(inputs=self.conv2, filters=64, kernel_size=[3, 3], padding="same", name="conv3")
 
-            hidden1 = tf.contrib.layers.fully_connected(self.imageIn , 32, activation_fn=tf.nn.relu, biases_initializer=None)
+            for l in range(nLayers):
+                self.hidden.append(tf.contrib.layers.fully_connected(self.hidden[-1] , 32, activation_fn=tf.nn.relu, biases_initializer=None))
             # hidden1 = tf.contrib.layers.fully_connected(self.imageIn , 32, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
 
             ##########################################
@@ -82,8 +83,8 @@ class AC_Network():
           #   self.policy = tf.layers.dense(inputs=self.dropout, units=a_size, activation=tf.nn.softmax, name="policy")
           #   self.value = tf.layers.dense(inputs=self.dropout, units=1, name="value")
 
-            self.policy = tf.layers.dense(inputs=hidden1, units=a_size, activation=tf.nn.softmax, name="policy")
-            self.value = tf.layers.dense(inputs=hidden1, units=1, name="value")
+            self.policy = tf.layers.dense(inputs=self.hidden[-1], units=a_size, activation=tf.nn.softmax, name="policy")
+            self.value = tf.layers.dense(inputs=self.hidden[-1], units=1, name="value")
 
 
             #Only the worker network need ops for loss functions and gradient updating.
