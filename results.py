@@ -22,7 +22,7 @@ from rawData import RawData
 def getResults():
 
     # Choose from "qTable", "qNetwork", "policyGradient", "a3c"
-    learnType = "a3c"
+    learnType = "qTable"
 
     # Q-learning variables
     epsilon = 0.5 # For epsilon-greedy action choice
@@ -36,8 +36,8 @@ def getResults():
     batchSize = 10
     nGames = 280
     # variables = [1,10,50]
-    # variables = [0.01, 0.1, 0.5]
-    variables = [1, 4, 8]
+    variables = [0.01, 0.1, 0.5]
+    # variables = [1, 4, 8]
     graph_filename = "a3c-54"
     maxPerEpisode = 100
     l = float("inf")
@@ -76,20 +76,20 @@ def getResults():
     for idx, x in enumerate(variables):
         allAvgs = []
         # QTABLE:
-        # algArgs = (x, gamma, alpha, nGames, False, True, nRows, nCols)
+        algArgs = (x, gamma, alpha, nGames, False, True, nRows, nCols)
         # QNETWORK:
         # algArgs = (epsilon, gamma, x, nGames, True, nRows, nCols)
         # POLICYGRADIENT:
         # algArgs = (nRows, nCols, maxPerEpisode, x, nGames, alpha)
         # A3C:
-        algArgs = (nRows, nCols, maxPerEpisode, interval, nGames, lr, x)
+        # algArgs = (nRows, nCols, maxPerEpisode, interval, nGames, lr, x)
         for i in range(agents):
             # print(idx, i)
-            # try:
-            avgs = funcs[learnType](*algArgs)
-            # except:
-            #     print("error")
-            #     continue
+            try:
+                avgs = funcs[learnType](*algArgs)
+            except:
+                print("error")
+                continue
 
             if learnType == "a3c":
                 allAvgs = allAvgs + avgs
@@ -156,7 +156,7 @@ def getResults():
             ))
 
 
-
+    print(allData)
     # print(graph_lines)
-    graph = Graph(t_steps, graph_lines, x_title, y_title, graph_filename)
-    graph.plot()
+    # graph = Graph(t_steps, graph_lines, x_title, y_title, graph_filename)
+    # graph.plot()
