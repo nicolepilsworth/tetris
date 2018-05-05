@@ -22,7 +22,7 @@ from rawData import RawData
 def getResults():
 
     # Choose from "qTable", "qNetwork", "policyGradient", "a3c"
-    learnType = "qTable"
+    learnType = "a3c"
 
     # Q-learning variables
     epsilon = 0.5 # For epsilon-greedy action choice
@@ -34,9 +34,11 @@ def getResults():
     nRows = 5
     nCols = 4
     batchSize = 10
-    nGames = 280
+    nGames = 5000
+    nLayers = 1
     # variables = [1,10,50]
-    variables = [0.01, 0.1, 0.5]
+    # variables = [0.01, 0.1, 0.5]
+    variables = [0.0001, 0.01, 0.1]
     # variables = [1, 4, 8]
     graph_filename = "a3c-54"
     maxPerEpisode = 100
@@ -70,31 +72,31 @@ def getResults():
     x_title = "Number of episodes"
     y_title = "Average score"
     agents = 1
-    # allData = RawData().collatedData
-    allData = {}
+    allData = RawData().collatedData
+    # allData = {}
 
     for idx, x in enumerate(variables):
         allAvgs = []
         # QTABLE:
-        algArgs = (x, gamma, alpha, nGames, False, True, nRows, nCols)
+        # algArgs = (x, gamma, alpha, nGames, False, True, nRows, nCols)
         # QNETWORK:
         # algArgs = (epsilon, gamma, x, nGames, True, nRows, nCols)
         # POLICYGRADIENT:
         # algArgs = (nRows, nCols, maxPerEpisode, x, nGames, alpha)
         # A3C:
-        # algArgs = (nRows, nCols, maxPerEpisode, interval, nGames, lr, x)
+        algArgs = (nRows, nCols, maxPerEpisode, interval, nGames, x, nLayers)
         for i in range(agents):
             # print(idx, i)
-            try:
-                avgs = funcs[learnType](*algArgs)
-            except:
-                print("error")
-                continue
-
-            if learnType == "a3c":
-                allAvgs = allAvgs + avgs
-            else:
-                allAvgs.append(avgs)
+            # try:
+            avgs = funcs[learnType](*algArgs)
+            # except:
+            #     print("error")
+            #     continue
+            #
+            # if learnType == "a3c":
+            #     allAvgs = allAvgs + avgs
+            # else:
+            #     allAvgs.append(avgs)
         # allAvgs = np.concatenate(tuple(list(map(lambda v: v[str(x)], allData))), axis=0)
         allData[str(x)] = allAvgs
         if learnType == "a3c":
@@ -114,13 +116,13 @@ def getResults():
                     "fillcolor":'rgba({},0.2)'.format(colours[idx]),
                     "line":Line(color='transparent'),
                     "showlegend":False,
-                    "name":'alpha = ' + str(x)
+                    "name":'epsilon = ' + str(x)
                 },
                 {   "x":t_steps,
                     "y":mean,
                     "line":Line(color="rgb({})".format(colours[idx])),
                     "mode":'lines',
-                    "name":'alpha = ' + str(x)
+                    "name":'epsilon = ' + str(x)
                 }
             ))
     if learnType == "a3c":
