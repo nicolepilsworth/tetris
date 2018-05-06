@@ -22,21 +22,22 @@ def normalized_columns_initializer(std=1.0):
     return _initializer
 
 class AC_Network():
-    def __init__(self,s_size,a_size,scope,trainer,nLayers):
+    def __init__(self,s_size,a_size,scope,trainer,nHLayers, nCLayers):
 
 
         with tf.variable_scope(scope):
           with tf.name_scope("board_input"):
             #Input and visual encoding layers
             self.imageIn = tf.placeholder(shape=s_size,dtype=tf.float32,name="board_input")
-            self.hidden = [tf.contrib.layers.fully_connected(self.imageIn , 32, activation_fn=tf.nn.relu, biases_initializer=None)]
-          # with tf.name_scope("conv_layers"):
-          #   self.conv1 = tf.layers.conv2d(inputs=self.imageIn, filters=16, kernel_size=[3, 3], padding="same", name="conv1")
-          #   self.conv2 = tf.layers.conv2d(inputs=self.conv1, filters=32, kernel_size=[3, 3], padding="same", name="conv2")
-          #   self.conv3 = tf.layers.conv2d(inputs=self.conv2, filters=64, kernel_size=[3, 3], padding="same", name="conv3")
+            self.cnnLayers = [tf.layers.conv2d(inputs=self.imageIn, filters=16, kernel_size=[3, 3], padding="same", name="conv1")]
 
-            for l in range(nLayers):
-                self.hidden.append(tf.contrib.layers.fully_connected(self.hidden[-1] , 32, activation_fn=tf.nn.relu, biases_initializer=None))
+            for c in range(nCLayers - 1):
+                self.cnnLayers.append(tf.layers.conv2d(inputs=self.cnnLayers[-1], filters=2^(5+c), kernel_size=[3, 3], padding="same"))
+
+            self.hidden = [tf.contrib.layers.fully_connected(slim.flatten(self.cnnLayers[-1]) , 32, activation_fn=tf.nn.relu, biases_initializer=None)]
+            for l in range(nHLayers):
+                self.hidden.append(tf.contrib.layers.fully_connected(self.hidden[-1] , 64, activation_fn=tf.nn.relu, biases_initializer=None))
+
             # hidden1 = tf.contrib.layers.fully_connected(self.imageIn , 32, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
 
             ##########################################

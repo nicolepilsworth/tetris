@@ -18,6 +18,7 @@ from cnn import learn as cnnLearn
 from policyGradient2 import learn as pgLearn
 from a3c import train as a3cTrain
 from rawData import RawData
+from algCompare import AlgCompare
 
 def getResults():
 
@@ -29,19 +30,20 @@ def getResults():
     gamma = 0.9 # Discount factor
     alpha = 0.3 # Value fnction learning rate
     rand = False # Whether to choose actions randomly of use Q-learning
-    lr = 0.01
+    lr = 0.001
 
-    nRows = 5
-    nCols = 4
+    nRows = 8
+    nCols = 6
     batchSize = 10
     nGames = 5000
-    nLayers = 1
+    nHLayers = 2
     # variables = [1,10,50]
     # variables = [0.01, 0.1, 0.5]
-    variables = [0.0001, 0.01, 0.1]
-    # variables = [1, 4, 8]
-    graph_filename = "a3c-54"
-    maxPerEpisode = 100
+    # variables = [0.01]
+    # variables = [0.0001, 0.01, 0.1]
+    variables = [1, 3, 5]
+    graph_filename = "alg-compare-54"
+    maxPerEpisode = 200
     l = float("inf")
 
     boardSize = str(nRows) + " rows * " + str(nCols) + " cols"
@@ -57,9 +59,6 @@ def getResults():
 
     allAvgs = []
 
-    # threads = [gevent.spawn(funcs[learnType], *args[learnType]) for i in range(20)]
-    # avgs = gevent.joinall(threads)
-    # print(np.mean([thread.value for thread in threads], axis=0))
 
 
     colours = ["0,76,153", "178,102,255", "0,153,76", "204,0,0"]
@@ -72,35 +71,41 @@ def getResults():
     x_title = "Number of episodes"
     y_title = "Average score"
     agents = 1
-    allData = RawData().collatedData
-    # allData = {}
+    algCompare = AlgCompare().data
+    # allData = RawData().collatedData
+    a3cData = {}
+    allData = {}
+
+
+    # graph = Graph(t_steps, algCompare, x_title, y_title, graph_filename)
+    # graph.plot()
+    # return
 
     for idx, x in enumerate(variables):
         allAvgs = []
         # QTABLE:
         # algArgs = (x, gamma, alpha, nGames, False, True, nRows, nCols)
         # QNETWORK:
-        # algArgs = (epsilon, gamma, x, nGames, True, nRows, nCols)
+        # algArgs = (x, gamma, alpha, nGames, True, nRows, nCols)
         # POLICYGRADIENT:
         # algArgs = (nRows, nCols, maxPerEpisode, x, nGames, alpha)
         # A3C:
-        algArgs = (nRows, nCols, maxPerEpisode, interval, nGames, x, nLayers)
-        for i in range(agents):
-            # print(idx, i)
-            # try:
-            avgs = funcs[learnType](*algArgs)
-            # except:
-            #     print("error")
-            #     continue
-            #
-            # if learnType == "a3c":
-            #     allAvgs = allAvgs + avgs
-            # else:
-            #     allAvgs.append(avgs)
+        algArgs = (nRows, nCols, maxPerEpisode, interval, nGames, x, nHLayers, x)
+        # for i in range(agents):
+        #     # print(idx, i)
+        #     try:
+        avgs = funcs[learnType](*algArgs)
+        #     except:
+        #         print("error")
+        #         continue
+        #     #
+        #     if learnType == "a3c":
+        #         allAvgs = allAvgs + avgs
+        #     else:
+        allAvgs.append(avgs)
         # allAvgs = np.concatenate(tuple(list(map(lambda v: v[str(x)], allData))), axis=0)
         allData[str(x)] = allAvgs
         if learnType == "a3c":
-
             l = min(min(map(len, allAvgs)), l)
         else:
             mean = np.mean(allAvgs, axis=0)

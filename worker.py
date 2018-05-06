@@ -34,7 +34,7 @@ def update_target_graph(from_scope,to_scope):
     return op_holder
 
 class Worker():
-    def __init__(self,name,s_size,a_size,trainer,global_episodes, board,nLayers):
+    def __init__(self,name,s_size,a_size,trainer,global_episodes, board,nHLayers,nCLayers):
         self.name = "worker_" + str(name)
         self.number = name
         self.trainer = trainer
@@ -48,7 +48,7 @@ class Worker():
         self.a_size = a_size
 
         #Create the local copy of the network and the tensorflow op to copy global paramters to local network
-        self.local_AC = AC_Network(s_size,a_size,self.name,trainer,nLayers)
+        self.local_AC = AC_Network(s_size,a_size,self.name,trainer,nHLayers,nCLayers)
         self.update_local_ops = update_target_graph('global',self.name)
 
         self.actions = list(range(board.ncols * 4))
@@ -100,7 +100,7 @@ class Worker():
 
         with sess.as_default(), sess.graph.as_default():
             # writer = tf.summary.FileWriter("/tmp/tensorflow", sess.graph)
-            while episode_count <= nGames:
+            while not coord.should_stop():
                 sess.run(self.update_local_ops)
                 episode_buffer = []
                 episode_values = []
@@ -117,7 +117,7 @@ class Worker():
                 tetromino = tetrominos[tetromino_idx]
 
                 possibleMoves = tetromino.getPossibleMoves(self.board)
-                s = util.pgState(self.board, tetromino.paddedRotations[0])
+                s = util.cnnState(self.board, tetromino.paddedRotations[0])
                 # s = util.a3cBoardState(self.board)
 
                 episode_frames.append(s)
@@ -129,7 +129,7 @@ class Worker():
                     a_dist,v = sess.run([self.local_AC.policy,self.local_AC.value,
                     # self.local_AC.tetromino_onehot
                     ],
-                        feed_dict={self.local_AC.imageIn:[s],
+                        feed_dict={self.local_AC.imageIn:s,
                         # self.local_AC.tetromino:tetromino_AC
                                     })
                     # print(c)
@@ -167,7 +167,7 @@ class Worker():
 
                     nextTetrominoIdx = random.randint(0, n_tetrominos)
                     nextTetromino = tetrominos[nextTetrominoIdx]
-                    s1 = util.pgState(self.board, nextTetromino.paddedRotations[0])
+                    s1 = util.cnnState(self.board, nextTetromino.paddedRotations[0])
                     # s1 = util.a3cBoardState(self.board)
 
                     possibleMoves = nextTetromino.getPossibleMoves(self.board)
@@ -196,7 +196,7 @@ class Worker():
                         # Since we don't know what the true final return is, we "bootstrap" from our current
                         # value estimation.
                         v1 = sess.run(self.local_AC.value,
-                            feed_dict={self.local_AC.imageIn:[s],
+                            feed_dict={self.local_AC.imageIn:s,
                                       # self.local_AC.tetromino:tetromino_AC
                                     })[0,0]
                         # print("estimate:", v1)

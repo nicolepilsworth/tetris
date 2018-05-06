@@ -19,24 +19,24 @@ def stop_training(coord):
   print("stopping training")
   coord.request_stop()
 
-def train(nrows, ncols, max_episode_length, saveFreq, nGames, lr, nLayers):
+def train(nrows, ncols, max_episode_length, saveFreq, nGames, lr, nHLayers, nCLayers):
     gamma = .9 # discount rate for advantage estimation and reward discounting
 
     # Tetris initialisations
     tetrominos = createTetrominos()
     board = Board(nrows, ncols)
-
-    # s_size = [
-    #   None,
-    #   4,
-    #   board.ncols,
-    #   1
-    # ]
-
-    # TODO: switch for tetromino onehot
     tShape = tetrominos[0].paddedRotations[0]
     tShapeRows, tShapeCols = tShape.shape[0], tShape.shape[1]
-    s_size = [None, (board.nrows * board.ncols) + (tShapeRows * tShapeCols)]
+
+    s_size = [
+      None,
+      board.nrows + tShapeRows,
+      board.ncols,
+      1
+    ]
+
+    # TODO: switch for tetromino onehot
+    # s_size = [None, (board.nrows * board.ncols) + (tShapeRows * tShapeCols)]
 
     a_size=board.ncols*4
 
@@ -45,20 +45,20 @@ def train(nrows, ncols, max_episode_length, saveFreq, nGames, lr, nLayers):
     global_episodes = tf.Variable(0,dtype=tf.int32,name='global_episodes',trainable=False)
     # trainer = tf.train.RMSPropOptimizer(learning_rate=lr, decay=0.85, epsilon=0.1)
     trainer = tf.train.AdamOptimizer(learning_rate=lr)
-    master_network = AC_Network(s_size,a_size,'global',None,nLayers) # Generate global network
+    master_network = AC_Network(s_size,a_size,'global',None,nHLayers, nCLayers) # Generate global network
     # num_workers = 1
     num_workers = multiprocessing.cpu_count() # Set workers ot number of available CPU threads
     workers = []
     # Create worker classes
     for i in range(num_workers):
         board = Board(nrows, ncols)
-        workers.append(Worker(i,s_size,a_size,trainer,global_episodes, board,nLayers))
+        workers.append(Worker(i,s_size,a_size,trainer,global_episodes, board,nHLayers,nCLayers))
 
     with tf.Session() as sess:
 
         coord = tf.train.Coordinator()
-        # main_timer = threading.Timer((60 * 50), stop_training, args=(coord,))
-        # main_timer.start()
+        main_timer = threading.Timer((60 * 2), stop_training, args=(coord,))
+        main_timer.start()
 
         sess.run(tf.global_variables_initializer())
 
