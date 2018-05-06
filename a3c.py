@@ -57,7 +57,7 @@ def train(nrows, ncols, max_episode_length, saveFreq, nGames, lr, nHLayers, nCLa
     with tf.Session() as sess:
 
         coord = tf.train.Coordinator()
-        main_timer = threading.Timer((60 * 2), stop_training, args=(coord,))
+        main_timer = threading.Timer((60 * 60 * 2), stop_training, args=(coord,))
         main_timer.start()
 
         sess.run(tf.global_variables_initializer())

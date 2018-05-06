@@ -30,7 +30,7 @@ def getResults():
     gamma = 0.9 # Discount factor
     alpha = 0.3 # Value fnction learning rate
     rand = False # Whether to choose actions randomly of use Q-learning
-    lr = 0.001
+    lr = 0.0001
 
     nRows = 8
     nCols = 6
@@ -41,7 +41,7 @@ def getResults():
     # variables = [0.01, 0.1, 0.5]
     # variables = [0.01]
     # variables = [0.0001, 0.01, 0.1]
-    variables = [1, 3, 5]
+    variables = [2, 4, 6]
     graph_filename = "alg-compare-54"
     maxPerEpisode = 200
     l = float("inf")
@@ -90,7 +90,7 @@ def getResults():
         # POLICYGRADIENT:
         # algArgs = (nRows, nCols, maxPerEpisode, x, nGames, alpha)
         # A3C:
-        algArgs = (nRows, nCols, maxPerEpisode, interval, nGames, x, nHLayers, x)
+        algArgs = (nRows, nCols, maxPerEpisode, interval, nGames, lr, nHLayers, x)
         # for i in range(agents):
         #     # print(idx, i)
         #     try:
@@ -130,37 +130,37 @@ def getResults():
                     "name":'epsilon = ' + str(x)
                 }
             ))
-    if learnType == "a3c":
-        print("L:", l)
-        t_steps = t_steps[:l]
-        t_steps_rev = t_steps_rev[-l:]
-        for idx, x in enumerate(variables):
-            allAvgs = allData[str(x)]
-            # allAvgs = np.concatenate(tuple(list(map(lambda v: v[str(x)], allData))), axis=0)
-            allAvgs = list(map(lambda x: x[:l], allAvgs))
-
-            mean = np.mean(allAvgs, axis=0)
-            std_dev = np.std(allAvgs, axis=0)
-            y_upper = np.add(mean, std_dev)
-            y_lower = np.subtract(mean, std_dev)
-            y_lower = y_lower[::-1]
-
-            graph_lines.extend(({
-                    "x": np.concatenate([t_steps, t_steps_rev]),
-                    "y": np.concatenate([y_upper, y_lower]),
-                    "fill":'tozerox',
-                    "fillcolor":'rgba({},0.2)'.format(colours[idx]),
-                    "line":Line(color='transparent'),
-                    "showlegend":False,
-                    "name":'#layers = ' + str(x)
-                },
-                {   "x":t_steps,
-                    "y":mean,
-                    "line":Line(color="rgb({})".format(colours[idx])),
-                    "mode":'lines',
-                    "name":'#layers = ' + str(x)
-                }
-            ))
+    # if learnType == "a3c":
+    #     print("L:", l)
+    #     t_steps = t_steps[:l]
+    #     t_steps_rev = t_steps_rev[-l:]
+    #     for idx, x in enumerate(variables):
+    #         allAvgs = allData[str(x)]
+    #         # allAvgs = np.concatenate(tuple(list(map(lambda v: v[str(x)], allData))), axis=0)
+    #         allAvgs = list(map(lambda x: x[:l], allAvgs))
+    #
+    #         mean = np.mean(allAvgs, axis=0)
+    #         std_dev = np.std(allAvgs, axis=0)
+    #         y_upper = np.add(mean, std_dev)
+    #         y_lower = np.subtract(mean, std_dev)
+    #         y_lower = y_lower[::-1]
+    #
+    #         graph_lines.extend(({
+    #                 "x": np.concatenate([t_steps, t_steps_rev]),
+    #                 "y": np.concatenate([y_upper, y_lower]),
+    #                 "fill":'tozerox',
+    #                 "fillcolor":'rgba({},0.2)'.format(colours[idx]),
+    #                 "line":Line(color='transparent'),
+    #                 "showlegend":False,
+    #                 "name":'#layers = ' + str(x)
+    #             },
+    #             {   "x":t_steps,
+    #                 "y":mean,
+    #                 "line":Line(color="rgb({})".format(colours[idx])),
+    #                 "mode":'lines',
+    #                 "name":'#layers = ' + str(x)
+    #             }
+    #         ))
 
 
     print(allData)

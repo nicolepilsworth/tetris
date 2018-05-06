@@ -29,14 +29,14 @@ class AC_Network():
           with tf.name_scope("board_input"):
             #Input and visual encoding layers
             self.imageIn = tf.placeholder(shape=s_size,dtype=tf.float32,name="board_input")
-            self.cnnLayers = [tf.layers.conv2d(inputs=self.imageIn, filters=16, kernel_size=[3, 3], padding="same", name="conv1")]
-
-            for c in range(nCLayers - 1):
-                self.cnnLayers.append(tf.layers.conv2d(inputs=self.cnnLayers[-1], filters=2^(5+c), kernel_size=[3, 3], padding="same"))
-
-            self.hidden = [tf.contrib.layers.fully_connected(slim.flatten(self.cnnLayers[-1]) , 32, activation_fn=tf.nn.relu, biases_initializer=None)]
-            for l in range(nHLayers):
-                self.hidden.append(tf.contrib.layers.fully_connected(self.hidden[-1] , 64, activation_fn=tf.nn.relu, biases_initializer=None))
+            # self.cnnLayers = [tf.layers.conv2d(inputs=self.imageIn, filters=16, kernel_size=[3, 3], padding="same", name="conv1")]
+            #
+            # for c in range(nCLayers - 1):
+            #     self.cnnLayers.append(tf.layers.conv2d(inputs=self.cnnLayers[-1], filters=2^(5+c), kernel_size=[3, 3], padding="same"))
+            #
+            # self.hidden = [tf.contrib.layers.fully_connected(slim.flatten(self.cnnLayers[-1]) , 32, activation_fn=tf.nn.relu, biases_initializer=None)]
+            # for l in range(nHLayers):
+            #     self.hidden.append(tf.contrib.layers.fully_connected(self.hidden[-1] , 64, activation_fn=tf.nn.relu, biases_initializer=None))
 
             # hidden1 = tf.contrib.layers.fully_connected(self.imageIn , 32, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
 
@@ -50,17 +50,37 @@ class AC_Network():
             # pool2_flat = tf.reshape(self.conv2, [-1, 64])
             # dense = tf.layers.dense(inputs=self.conv1, units=16, activation=tf.nn.relu)
             # self.conv3 = tf.layers.conv2d(inputs=self.conv2, filters=64, kernel_size=[3, 3])
-            # self.conv1 = tf.nn.conv2d(activation_fn=tf.nn.elu,
-            #     inputs=self.imageIn,num_outputs=32,
-            #     kernel_size=[3,3],stride=[1,1],padding='VALID')
+            self.conv1 = slim.conv2d(
+                self.imageIn,12,
+                kernel_size=[3,3],stride=1,weights_initializer=tf.contrib.layers.xavier_initializer(),padding='SAME')
+            hidden = slim.fully_connected(slim.flatten(self.conv1),40,activation_fn=tf.nn.relu)
             # # (previously [8, 8], [4, 4])
-            # self.conv2 = tf.nn.conv2d(activation_fn=tf.nn.elu,
-            #     inputs=self.conv1,num_outputs=32,
-            #     kernel_size=[3,3],stride=[1,1],padding='VALID')
+            if nCLayers >= 2:
+                self.conv2 = slim.conv2d(
+                    self.conv1,24,
+                    kernel_size=[3,3],stride=1,weights_initializer=tf.contrib.layers.xavier_initializer(),padding='SAME')
+                hidden = slim.fully_connected(slim.flatten(self.conv2),40,activation_fn=tf.nn.relu)
+            if nCLayers >= 4:
+                self.conv3 = slim.conv2d(
+                    self.conv2,32,
+                    kernel_size=[3,3],stride=1,weights_initializer=tf.contrib.layers.xavier_initializer(),padding='SAME')
+                self.conv4 = slim.conv2d(
+                    self.conv3,64,
+                    kernel_size=[3,3],stride=1,weights_initializer=tf.contrib.layers.xavier_initializer(),padding='SAME')
+                hidden = slim.fully_connected(slim.flatten(self.conv4),40,activation_fn=tf.nn.relu)
+            if nCLayers >=6:
+                self.conv5 = slim.conv2d(
+                    self.conv4,64,
+                    kernel_size=[3,3],stride=1,weights_initializer=tf.contrib.layers.xavier_initializer(),padding='SAME')
+                self.conv6 = slim.conv2d(
+                    self.conv5,64,
+                    kernel_size=[3,3],stride=1,weights_initializer=tf.contrib.layers.xavier_initializer(),padding='SAME')
+                hidden = slim.fully_connected(slim.flatten(self.conv6),40,activation_fn=tf.nn.relu)
             ##########################################
 
           # with tf.name_scope("fully_connected_layer"):
-          #   hidden = slim.fully_connected(slim.flatten(self.conv3),40,activation_fn=tf.nn.relu)
+
+            hidden2= slim.fully_connected(hidden,60,activation_fn=tf.nn.relu)
 
         ##########################################
         # NOT USED:
@@ -84,8 +104,8 @@ class AC_Network():
           #   self.policy = tf.layers.dense(inputs=self.dropout, units=a_size, activation=tf.nn.softmax, name="policy")
           #   self.value = tf.layers.dense(inputs=self.dropout, units=1, name="value")
 
-            self.policy = tf.layers.dense(inputs=self.hidden[-1], units=a_size, activation=tf.nn.softmax, name="policy")
-            self.value = tf.layers.dense(inputs=self.hidden[-1], units=1, name="value")
+            self.policy = tf.layers.dense(inputs=hidden2, units=a_size, activation=tf.nn.softmax, name="policy")
+            self.value = tf.layers.dense(inputs=hidden2, units=1, name="value")
 
 
             #Only the worker network need ops for loss functions and gradient updating.
@@ -101,7 +121,7 @@ class AC_Network():
                 self.value_loss = 0.5 * tf.reduce_sum(tf.square(self.target_v - tf.reshape(self.value,[-1])))
                 self.entropy = - tf.reduce_sum(self.policy * tf.log(self.policy + 10e-6))
                 self.policy_loss = -tf.reduce_sum(tf.log(self.responsible_outputs + 10e-6)*self.advantages)
-                self.loss = 0.5 * self.value_loss + self.policy_loss - self.entropy * 0.1
+                self.loss = 0.5 * self.value_loss + self.policy_loss - self.entropy * 0.01
                 self.adv_sum = tf.reduce_sum(self.advantages)
 
                 #Get gradients from local network using local losses
