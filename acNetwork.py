@@ -29,6 +29,14 @@ class AC_Network():
           with tf.name_scope("board_input"):
             #Input and visual encoding layers
             self.imageIn = tf.placeholder(shape=s_size,dtype=tf.float32,name="board_input")
+            # self.conv1 = slim.conv2d(activation_fn=tf.nn.elu,
+            #     inputs=self.imageIn,num_outputs=16,
+            #     kernel_size=[3,3],stride=[1,1],padding='VALID')
+            # # (previously [8, 8], [4, 4])
+            # self.conv2 = slim.conv2d(activation_fn=tf.nn.elu,
+            #     inputs=self.conv1,num_outputs=32,
+            #     kernel_size=[2,2],stride=[1,1],padding='VALID')
+            # hidden = slim.fully_connected(slim.flatten(self.conv2),256,activation_fn=tf.nn.elu)
             # self.cnnLayers = [tf.layers.conv2d(inputs=self.imageIn, filters=16, kernel_size=[3, 3], padding="same", name="conv1")]
             #
             # for c in range(nCLayers - 1):
@@ -50,16 +58,17 @@ class AC_Network():
             # pool2_flat = tf.reshape(self.conv2, [-1, 64])
             # dense = tf.layers.dense(inputs=self.conv1, units=16, activation=tf.nn.relu)
             # self.conv3 = tf.layers.conv2d(inputs=self.conv2, filters=64, kernel_size=[3, 3])
-            self.conv1 = slim.conv2d(
-                self.imageIn,12,
-                kernel_size=[3,3],stride=1,weights_initializer=tf.contrib.layers.xavier_initializer(),padding='SAME')
-            hidden = slim.fully_connected(slim.flatten(self.conv1),40,activation_fn=tf.nn.relu)
+            ################################################
+            self.conv1 = slim.conv2d(activation_fn=tf.nn.elu,
+                inputs=self.imageIn,num_outputs=16,
+                kernel_size=[3,3],stride=[1,1],padding='VALID')
+            hidden = slim.fully_connected(slim.flatten(self.conv1),256,activation_fn=tf.nn.elu)
             # # (previously [8, 8], [4, 4])
             if nCLayers >= 2:
-                self.conv2 = slim.conv2d(
-                    self.conv1,24,
-                    kernel_size=[3,3],stride=1,weights_initializer=tf.contrib.layers.xavier_initializer(),padding='SAME')
-                hidden = slim.fully_connected(slim.flatten(self.conv2),40,activation_fn=tf.nn.relu)
+                self.conv2 = slim.conv2d(activation_fn=tf.nn.elu,
+                    inputs=self.conv1,num_outputs=32,
+                    kernel_size=[2,2],stride=[1,1],padding='VALID')
+                hidden = slim.fully_connected(slim.flatten(self.conv2),256,activation_fn=tf.nn.elu)
             if nCLayers >= 4:
                 self.conv3 = slim.conv2d(
                     self.conv2,32,
@@ -67,7 +76,7 @@ class AC_Network():
                 self.conv4 = slim.conv2d(
                     self.conv3,64,
                     kernel_size=[3,3],stride=1,weights_initializer=tf.contrib.layers.xavier_initializer(),padding='SAME')
-                hidden = slim.fully_connected(slim.flatten(self.conv4),40,activation_fn=tf.nn.relu)
+                hidden = hidden = slim.fully_connected(slim.flatten(self.conv4),256,activation_fn=tf.nn.elu)
             if nCLayers >=6:
                 self.conv5 = slim.conv2d(
                     self.conv4,64,
@@ -75,12 +84,12 @@ class AC_Network():
                 self.conv6 = slim.conv2d(
                     self.conv5,64,
                     kernel_size=[3,3],stride=1,weights_initializer=tf.contrib.layers.xavier_initializer(),padding='SAME')
-                hidden = slim.fully_connected(slim.flatten(self.conv6),40,activation_fn=tf.nn.relu)
+                hidden = slim.fully_connected(slim.flatten(self.conv6),256,activation_fn=tf.nn.elu)
             ##########################################
 
           # with tf.name_scope("fully_connected_layer"):
 
-            hidden2= slim.fully_connected(hidden,60,activation_fn=tf.nn.relu)
+            hidden2= slim.fully_connected(hidden,256,activation_fn=tf.nn.elu)
 
         ##########################################
         # NOT USED:

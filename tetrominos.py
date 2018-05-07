@@ -3,16 +3,16 @@ import numpy as np
 
 def createTetrominos():
     shapes = [np.array(x) for x in [
-    # [[True, True],
-    # [True, False]],
-    #
-    # [[True, True, True]]
+    [[True, True],
+    [True, False]],
 
-      [[True, True],
-       [True, False],
-       [True, False]],
+    [[True, True, True]]
 
-       [[True], [True], [True], [True]],
+      # [[True, True],
+      #  [True, False],
+      #  [True, False]],
+      #
+      #  [[True], [True], [True], [True]],
     #
     #    [[False, True, False],
     #    [True, True, True]],
@@ -27,8 +27,8 @@ def createTetrominos():
     #    [[False, True, True],
     #    [True, True, False]],
     #    #
-       [[True, True],
-       [True, True]]
+       # [[True, True],
+       # [True, True]]
     ]]
 
     rotations = [setRotations(s) for s in shapes]

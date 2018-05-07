@@ -100,10 +100,10 @@ def getResults():
         #         continue
         #     #
         #     if learnType == "a3c":
-        #         allAvgs = allAvgs + avgs
+        allAvgs = allAvgs + avgs
         #     else:
-        allAvgs.append(avgs)
-        # allAvgs = np.concatenate(tuple(list(map(lambda v: v[str(x)], allData))), axis=0)
+        # allAvgs.append(avgs)
+        allAvgs = np.concatenate(tuple(list(map(lambda v: v[str(x)][0], allData))), axis=0)
         allData[str(x)] = allAvgs
         if learnType == "a3c":
             l = min(min(map(len, allAvgs)), l)
