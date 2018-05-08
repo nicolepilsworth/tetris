@@ -89,7 +89,7 @@ class AC_Network():
 
           # with tf.name_scope("fully_connected_layer"):
 
-            # hidden2= slim.fully_connected(hidden,256,activation_fn=tf.nn.elu)
+            hidden2= slim.fully_connected(hidden,256,activation_fn=tf.nn.elu)
 
         ##########################################
         # NOT USED:
@@ -98,14 +98,14 @@ class AC_Network():
             # dense_connected2 = tf.contrib.layers.fully_connected(dense_connected_layer, 48, activation_fn=tf.nn.relu, weights_initializer=tf.contrib.layers.xavier_initializer(), biases_initializer=None)
         ##########################################
 
-          with tf.name_scope("tetromino_input"):
-            self.tetromino = tf.placeholder(shape=[None, 1],dtype=tf.int32, name="tetromino_idx")
-            self.tetromino_onehot = tf.reshape(tf.one_hot(self.tetromino,7,dtype=tf.float32), shape=[-1, 7], name="tetromino_onehot")
-          with tf.name_scope("layer_concat"):
-            self.concat_layer = tf.concat([self.tetromino_onehot, hidden], 1, name="concatenation")
-          with tf.name_scope("fully_connected_layers"):
-            hidden2 = slim.fully_connected(self.concat_layer,64,activation_fn=tf.nn.relu)
-            hidden3 = slim.fully_connected(hidden2,128,activation_fn=tf.nn.relu)
+          # with tf.name_scope("tetromino_input"):
+          #   self.tetromino = tf.placeholder(shape=[None, 1],dtype=tf.int32, name="tetromino_idx")
+          #   self.tetromino_onehot = tf.reshape(tf.one_hot(self.tetromino,7,dtype=tf.float32), shape=[-1, 7], name="tetromino_onehot")
+          # with tf.name_scope("layer_concat"):
+          #   self.concat_layer = tf.concat([self.tetromino_onehot, hidden], 1, name="concatenation")
+          # with tf.name_scope("fully_connected_layers"):
+          #   hidden2 = slim.fully_connected(self.concat_layer,64,activation_fn=tf.nn.relu)
+          #   hidden3 = slim.fully_connected(hidden2,128,activation_fn=tf.nn.relu)
           # with tf.name_scope("dropout"):
           #   self.dropout = tf.layers.dropout(
           #       inputs=hidden3, rate=0.4, training=True, name="dropout")
@@ -113,8 +113,8 @@ class AC_Network():
           #   self.policy = tf.layers.dense(inputs=self.dropout, units=a_size, activation=tf.nn.softmax, name="policy")
           #   self.value = tf.layers.dense(inputs=self.dropout, units=1, name="value")
 
-            self.policy = tf.layers.dense(inputs=hidden3, units=a_size, activation=tf.nn.softmax, name="policy")
-            self.value = tf.layers.dense(inputs=hidden3, units=1, name="value")
+            self.policy = tf.layers.dense(inputs=hidden2, units=a_size, activation=tf.nn.softmax, name="policy")
+            self.value = tf.layers.dense(inputs=hidden2, units=1, name="value")
 
 
             #Only the worker network need ops for loss functions and gradient updating.
