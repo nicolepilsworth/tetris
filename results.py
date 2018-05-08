@@ -72,9 +72,9 @@ def getResults():
     y_title = "Average score"
     agents = 1
     # algCompare = AlgCompare().data
-    allData = RawData().collatedData
+    # allData = RawData().collatedData
     a3cData = {}
-    # allData = {}
+    allData = {}
 
 
     # graph = Graph(t_steps, algCompare, x_title, y_title, graph_filename)
@@ -105,7 +105,7 @@ def getResults():
         # allAvgs.append(avgs)
         # allAvgs = list(map(lambda v: v[str(x)][0], allData))
 
-        a3cData[str(x)] = allAvgs
+        allData[str(x)] = allAvgs
         if learnType == "a3c":
             l = min(min(map(len, allAvgs)), l)
         else:
